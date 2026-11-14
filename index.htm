@@ -17,7 +17,7 @@ h3{font-size:.95rem;margin:0}
 .vol input{width:90px;accent-color:#bef264}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-weight:600}
 main{display:grid;grid-template-columns:minmax(0,600px) minmax(0,1fr);gap:16px;padding:16px;max-width:1280px;margin:0 auto}
-@media(max-width:980px){main{grid-template-columns:1fr}}
+#mnav{display:none}
 section,aside>div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px}
 button,select,input{font:inherit}
 button{cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--teal);color:#fff;padding:6px 12px;font-weight:600}
@@ -83,6 +83,23 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
 .muted{color:var(--muted);font-size:.88rem}
 .sr{position:absolute;left:-9999px}
 #pausedBanner{background:var(--warn);color:#1f1300;font-weight:700;text-align:center;padding:4px}
+@media(max-width:980px){
+  main{grid-template-columns:1fr;padding:10px;gap:0}
+  #mnav{display:flex;position:sticky;top:0;z-index:5;background:#0a2e19;border-bottom:2px solid var(--teal);padding:6px;gap:4px}
+  #mnav button{flex:1;padding:8px 2px;font-size:.82rem;background:var(--card2);color:var(--ink);min-width:0}
+  #mnav button[aria-pressed=true]{background:var(--teal);border-color:var(--teal2);color:#fff}
+  #mnav .n{display:inline-block;background:#fde047;color:#1f1300;border-radius:999px;padding:0 6px;margin-left:3px;font-size:.75rem}
+  #p-garden,#p-goals,#p-journal,#p-sel,#p-log{display:none}
+  main[data-tab=garden] #p-garden,main[data-tab=goals] #p-goals,main[data-tab=journal] #p-journal,main[data-tab=sel] #p-sel,main[data-tab=log] #p-log{display:block}
+  header{padding:6px 10px;gap:6px}h1{font-size:1.05rem}
+  .stats{gap:6px;font-size:.85rem}.stats button{padding:4px 8px}.stat{padding:2px 8px}.vol input{width:70px}
+  section,aside>div{padding:10px}
+  main[data-tab=garden] #p-garden{display:flex;flex-direction:column}
+  #p-garden h2{order:0}#tools{order:1}#log{order:2;margin:0 0 8px;min-height:0}#grid{order:3;padding:4px;gap:4px}#p-garden>p{order:4}
+  #log li:not(:first-child){display:none}
+  .tile .lab{margin-bottom:3px;padding:0 3px}.tile .pid,.tile .bad{font-size:.6rem}
+  .tile{font-size:.62rem;aspect-ratio:5/6}.tile.has img{inset:2px 2px 36%;width:calc(100% - 4px);height:calc(64% - 2px);filter:none}.tile .pid{display:none}.tile .lab{line-height:1.1}.tools label{font-size:.82rem;padding:5px 7px}.tools kbd{display:none}
+}
 </style>
 </head>
 <body>
@@ -101,9 +118,10 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
 </header>
 <div id="pausedBanner" hidden>Game paused</div>
 <div id="verify" hidden></div>
-<main>
+<nav id="mnav" aria-label="Game sections"></nav>
+<main data-tab="garden">
   <div>
-    <section aria-labelledby="h-garden">
+    <section id="p-garden" aria-labelledby="h-garden">
       <h2 id="h-garden">Garden patch</h2>
       <fieldset class="tools" id="tools">
         <legend>Pick a tool, then choose a tile</legend>
@@ -112,22 +130,22 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
       <p class="muted" style="margin:8px 0 0">To cross: pick the Cross tool, choose a blooming plant, then a blooming plant beside it (not diagonal). One seed lands on an empty neighboring tile. Each parent rests 20 seconds (⏳) before its next cross.</p>
       <ul id="log" aria-live="polite" aria-label="Garden log"></ul>
     </section>
-    <section aria-labelledby="h-sel">
-      <h2 id="h-sel">Selected plant and pedigree</h2>
-      <div id="sel"><p class="muted">Choose a tile with a plant to see its parents and offspring.</p></div>
-    </section>
   </div>
   <aside aria-label="Goals, journal and records">
-    <div>
+    <div id="p-goals">
       <h2>Goals</h2>
       <div id="goals"></div>
     </div>
-    <div>
+    <div id="p-journal">
       <h2>Field journal</h2>
       <p class="muted" style="margin-top:0">A color appears here once it blooms. For each color, record every genotype that produces it and the inheritance pattern. Correct entry: +100. Wrong entry: −20.</p>
       <div id="journal"></div>
     </div>
-    <div>
+    <div id="p-sel">
+      <h2 id="h-sel">Selected plant and pedigree</h2>
+      <div id="sel"><p class="muted">Choose a tile with a plant to see its parents and offspring.</p></div>
+    </div>
+    <div id="p-log">
       <h2>Cross log</h2>
       <div id="crosslog"><p class="muted">No crosses yet.</p></div>
     </div>
@@ -372,21 +390,21 @@ function tileClick(i){
   const id=S.grid[i],p=id!==null?S.plants[id]:null;
   if(tool.startsWith("plant")){if(p){selId=id;say("That tile is already occupied.");}else{plantSeed(i,tool[5]);selId=S.grid[i];}}
   else if(!p){say("That tile is empty.");}
-  else{selId=id;
+  else{selId=id;if(tool==="inspect"&&isMobile()){afterChange();setTab("sel");return;}
     if(tool==="water")water(p);else if(tool==="fert")fertilize(p);else if(tool==="cross")crossClick(p);else if(tool==="collect"){openCollect(p);return;}}
   afterChange();
 }
 function renderGrid(){
-  const g=$("grid");
+  const g=$("grid"),mob=isMobile();
   for(let i=0;i<N*N;i++){
     const b=g.children[i],id=S.grid[i],r=Math.floor(i/N)+1,c=i%N+1;
     const img=b.children[0],emo=b.children[1],bad=b.children[2],pid=b.children[3],lab=b.children[4],bar=b.children[5];
     let cls="tile",aria="Row "+r+", column "+c+": ",e="",l="",bd="",w=0;
     if(id===null){aria+="empty soil";}
     else{const p=S.plants[id];pid.textContent="#"+id;
-      if(p.stage==="seed"){cls+=" has seed";if(img.dataset.k!=="SEED"){img.src=IMG.SEED;img.dataset.k="SEED";}l=p.water?"Seed":"Seed: needs water";bd=p.water?"💧":"";w=(S.t-p.start)/(p.due-p.start);aria+="plant "+id+", seed, "+(p.water?"watered":"needs water");}
-      else if(p.stage==="sprout"){cls+=" has sprout";if(img.dataset.k!=="SPROUT"){img.src=IMG.SPROUT;img.dataset.k="SPROUT";}const need=[];if(!p.water)need.push("water");if(!p.fert)need.push("fertilizer");l=need.length?"Needs "+need.join(" + "):"Sprout";bd=(p.water?"💧":"")+(p.fert?"🧪":"");w=(S.t-p.start)/(p.due-p.start);aria+="plant "+id+", sprout, "+(need.length?"needs "+need.join(" and "):"watered and fertilized");}
-      else{const k=phOf(p),th=S.t-p.lastWater>=45,rest=S.t<p.breedAt;cls+=" has bloom"+(th?" thirsty":"")+(id===crossA?" parent":"");l=PH[k].name+(th?" · thirsty!":"");bd=(id===crossA?"Parent 1":"")+(rest?"⏳":"");if(img.dataset.k!==k){img.src=IMG[PH[k].img];img.dataset.k=k;}
+      if(p.stage==="seed"){cls+=" has seed";if(img.dataset.k!=="SEED"){img.src=IMG.SEED;img.dataset.k="SEED";}l=mob?"#"+id+(p.water?" seed":" needs 💧"):(p.water?"Seed":"Needs water");bd=p.water?"💧":"";w=(S.t-p.start)/(p.due-p.start);aria+="plant "+id+", seed, "+(p.water?"watered":"needs water");}
+      else if(p.stage==="sprout"){cls+=" has sprout";if(img.dataset.k!=="SPROUT"){img.src=IMG.SPROUT;img.dataset.k="SPROUT";}const need=[];if(!p.water)need.push("water");if(!p.fert)need.push("fertilizer");l=mob?"#"+id+(need.length?" needs "+(p.water?"":"💧")+(p.fert?"":"🧪"):" sprout"):(need.length?"Needs "+need.join(" + "):"Sprout");bd=(p.water?"💧":"")+(p.fert?"🧪":"");w=(S.t-p.start)/(p.due-p.start);aria+="plant "+id+", sprout, "+(need.length?"needs "+need.join(" and "):"watered and fertilized");}
+      else{const k=phOf(p),th=S.t-p.lastWater>=45,rest=S.t<p.breedAt;cls+=" has bloom"+(th?" thirsty":"")+(id===crossA?" parent":"");l=(mob?"#"+id+" ":"")+PH[k].name+(th?(mob?" 💧!":" · thirsty!"):"");bd=(id===crossA?(mob?"P1":"Parent 1"):"")+(rest?"⏳":"");if(img.dataset.k!==k){img.src=IMG[PH[k].img];img.dataset.k=k;}
         w=Math.min(1,(S.t-p.lastWater)/60);aria+="plant "+id+", "+PH[k].name+" marigold in bloom"+(th?", thirsty, needs water":"")+(rest?", resting after a cross":"")+(id===crossA?", chosen as first parent":"");}
       if(id===selId)cls+=" sel";}
     if(id===null)pid.textContent="";
@@ -466,10 +484,17 @@ function renderCrossLog(){
   if(!keys.length){$("crosslog").innerHTML='<p class="muted">No crosses yet.</p>';return;}
   $("crosslog").innerHTML='<table><caption class="sr">Offspring counts for every pair of parents</caption><thead><tr><th scope="col">Parent 1</th><th scope="col">Parent 2</th><th scope="col">Offspring so far</th></tr></thead><tbody>'
    +keys.map(key=>{const [a,b]=key.split("x").map(Number);return'<tr><td>'+pbtn(a)+'</td><td>'+pbtn(b)+'</td><td>'+tally(by[key])+'</td></tr>';}).join("")+'</tbody></table>';
-  $("crosslog").querySelectorAll("button").forEach(b=>b.onclick=()=>{selId=Number(b.dataset.id);renderSel();renderGrid();$("h-sel").scrollIntoView({block:"nearest"});});
+  $("crosslog").querySelectorAll("button").forEach(b=>b.onclick=()=>{selId=Number(b.dataset.id);renderSel();renderGrid();if(isMobile())setTab("sel");else $("h-sel").scrollIntoView({block:"nearest"});});
 }
 function pbtn(id){const p=S.plants[id];return'<button class="linkbtn" data-id="'+id+'" aria-label="Show pedigree for plant '+id+'">#'+id+'</button> '+(p.bloomed?PH[phOf(p)].name+(p.revealed?" ("+p.g+")":""):"unknown");}
-function renderAll(){renderGrid();renderGoals();renderJournal();renderSel();renderCrossLog();}
+const TABS=[["garden","Garden"],["goals","Goals"],["journal","Journal"],["sel","Pedigree"],["log","Crosses"]];
+const isMobile=()=>window.matchMedia("(max-width:980px)").matches;
+function setTab(t){document.querySelector("main").dataset.tab=t;renderNav();if(isMobile())window.scrollTo(0,0);}
+function buildNav(){const n=$("mnav");TABS.forEach(([k,l])=>{const b=document.createElement("button");b.dataset.tab=k;b.onclick=()=>setTab(k);n.appendChild(b);});renderNav();}
+function renderNav(){const cur=document.querySelector("main").dataset.tab,todo=PHKEYS.filter(k=>S.discovered[k]&&!S.journal[k]).length;
+  [...$("mnav").children].forEach((b,i)=>{const [k,l]=TABS[i];b.setAttribute("aria-pressed",k===cur);
+    const h=l+(k==="journal"&&todo?'<span class="n" aria-label="'+todo+' entries to fill">'+todo+'</span>':"");if(b.innerHTML!==h)b.innerHTML=h;});}
+function renderAll(){renderNav();renderGrid();renderGoals();renderJournal();renderSel();renderCrossLog();}
 
 /* ---------- loop & wiring ---------- */
 function anyDialog(){return!!document.querySelector("dialog[open]");}
@@ -496,7 +521,7 @@ function frame(){
 }
 function init(){
   S=load()||fresh();
-  buildTools();buildGrid();buildJournal();
+  buildTools();buildGrid();buildJournal();buildNav();
   ["a1","a2"].forEach(id=>{$(id).innerHTML=ORDER.split("").map(a=>"<option>"+a+"</option>").join("");});
   renderAll();renderLog();
   $("btnPause").onclick=()=>{userPaused=!userPaused;$("btnPause").setAttribute("aria-pressed",userPaused);$("btnPause").textContent=userPaused?"Resume":"Pause";};
