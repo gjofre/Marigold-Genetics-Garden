@@ -187,6 +187,7 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
     <li>Sprouts need <strong>water and fertilizer</strong> within 15 seconds to bloom on time. Without both they may bloom late or wither.</li>
     <li>Blooming plants need water <strong>every 60 seconds</strong>. A thirsty plant (amber border) may wither.</li>
     <li>Like Mendel with his peas, <strong>you choose the crosses</strong>: with the Cross tool, pick any two blooming plants, then pick an empty tile where their seed will be planted.</li>
+    <li><strong>Replant</strong> moves a plant to another tile (or swaps two plants), so you can organize the patch however you like.</li>
     <li><strong>Collect</strong> a bloom to sell it for points. You can also identify its genotype for a bonus, but a wrong call costs points.</li>
     <li>Fill in the <strong>field journal</strong> for every color.</li>
   </ol>
@@ -257,10 +258,10 @@ const PATS={
   codom:"Codominance: a heterozygote showing both parental colors side by side"
 };
 const PACKET={W:"White",B:"Blue",R:"Red",Y:"Yellow"};
-const TOOLS=[["inspect","🔍 Inspect"],["plantW","🌰 White seed"],["plantB","🌰 Blue seed"],["plantR","🌰 Red seed"],["plantY","🌰 Yellow seed"],["water","💧 Water"],["fert","🧪 Fertilizer"],["cross","🖌️ Cross"],["collect","✂️ Collect"]];
+const TOOLS=[["inspect","🔍 Inspect"],["plantW","🌰 White seed"],["plantB","🌰 Blue seed"],["plantR","🌰 Red seed"],["plantY","🌰 Yellow seed"],["water","💧 Water"],["fert","🧪 Fertilizer"],["cross","🖌️ Cross"],["collect","✂️ Collect"],["move","🪴 Replant"]];
 const SAVE_KEY="marigoldGenetics_v2", SALT="biol151-marigold-2026";
 const N=5;
-let S, tool="inspect", selId=null, crossA=null, crossB=null, userPaused=false, lastReal=performance.now(), rng=Math.random;
+let S, tool="inspect", selId=null, crossA=null, crossB=null, moveA=null, userPaused=false, lastReal=performance.now(), rng=Math.random;
 const $=id=>document.getElementById(id);
 const norm=(a,b)=>ORDER.indexOf(a)<=ORDER.indexOf(b)?a+b:b+a;
 const pick=a=>a[Math.floor(rng()*a.length)];
@@ -285,7 +286,7 @@ function plantSeed(tile,allele){
   const p=newPlant(g,tile,null,allele);
   say("Planted a "+PACKET[allele].toLowerCase()+" starter seed (#"+p.id+"). Water it within 15 seconds.");
 }
-function removePlant(p,fate){if(crossA===p.id||crossB===p.id){crossA=crossB=null;}S.grid[p.tile]=null;p.tile=-1;p.stage="gone";p.fate=fate;}
+function removePlant(p,fate){if(moveA===p.id)moveA=null;if(crossA===p.id||crossB===p.id){crossA=crossB=null;}S.grid[p.tile]=null;p.tile=-1;p.stage="gone";p.fate=fate;}
 function water(p){
   if(p.stage==="bloom"){p.lastWater=S.t;p.checkAt=S.t+60;say("Watered #"+p.id+".");}
   else if(p.water){say("#"+p.id+" is already watered.");}
@@ -321,6 +322,19 @@ function step(dt){
       else p.checkAt=S.t+60;
     }
   }
+}
+function moveTile(i){
+  const id=S.grid[i],p=id!==null?S.plants[id]:null;
+  if(moveA===null){
+    if(!p){say("Choose the plant you want to replant.");return;}
+    moveA=id;selId=id;say("Replanting #"+id+". Now choose its new tile (an empty tile, or another plant to swap places).");return;
+  }
+  const a=S.plants[moveA];
+  if(p&&p.id===a.id){moveA=null;say("Replanting cancelled.");return;}
+  const from=a.tile;
+  if(p){S.grid[from]=p.id;p.tile=from;S.grid[i]=a.id;a.tile=i;say("Swapped #"+a.id+" and #"+p.id+".");}
+  else{S.grid[from]=null;S.grid[i]=a.id;a.tile=i;say("Replanted #"+a.id+".");}
+  selId=a.id;moveA=null;
 }
 function crossTile(i){
   const id=S.grid[i],p=id!==null?S.plants[id]:null;
@@ -404,8 +418,8 @@ function chip(p){
 function status(p){return p.stage==="gone"?" · "+p.fate:(p.packet&&p.bloomed?" · starter":"");}
 function buildTools(){
   const f=$("tools");
-  TOOLS.forEach(([k,l],i)=>{const lab=document.createElement("label");lab.innerHTML='<input type="radio" name="tool" value="'+k+'"'+(i===0?" checked":"")+'>'+l+' <kbd>'+(i+1)+'</kbd>';f.appendChild(lab);});
-  f.addEventListener("change",e=>{tool=e.target.value;crossA=crossB=null;renderGrid();});
+  TOOLS.forEach(([k,l],i)=>{const lab=document.createElement("label");lab.innerHTML='<input type="radio" name="tool" value="'+k+'"'+(i===0?" checked":"")+'>'+l+' <kbd>'+((i+1)%10)+'</kbd>';f.appendChild(lab);});
+  f.addEventListener("change",e=>{tool=e.target.value;crossA=crossB=moveA=null;renderGrid();});
 }
 function buildGrid(){
   const g=$("grid");
@@ -423,6 +437,7 @@ function tileClick(i){
   if(S.done){say("The game is finished. Start a new game to play again.");return;}
   const id=S.grid[i],p=id!==null?S.plants[id]:null;
   if(tool==="cross"){crossTile(i);afterChange();return;}
+  if(tool==="move"){moveTile(i);afterChange();return;}
   if(tool.startsWith("plant")){if(p){selId=id;say("That tile is already occupied.");}else{plantSeed(i,tool[5]);selId=S.grid[i];}}
   else if(!p){say("That tile is empty.");}
   else{selId=id;if(tool==="inspect"&&isMobile()){afterChange();setTab("sel");return;}
@@ -436,12 +451,13 @@ function renderGrid(){
     const img=b.children[0],emo=b.children[1],bad=b.children[2],pid=b.children[3],lab=b.children[4],bar=b.children[5];
     let cls="tile",aria="Row "+r+", column "+c+": ",e="",l="",bd="",w=0;
     const par=id!==null&&id===crossA?1:(id!==null&&id===crossB?2:0);
-    if(id===null){aria+="empty soil";if(crossA!==null&&crossB!==null){cls+=" target";aria+=", available for the new seed";}}
+    if(id===null){aria+="empty soil";if(crossA!==null&&crossB!==null){cls+=" target";aria+=", available for the new seed";}else if(moveA!==null){cls+=" target";aria+=", available for replanting";}}
     else{const p=S.plants[id];pid.textContent="#"+id;
       if(p.stage==="seed"){cls+=" has seed";if(img.dataset.k!=="SEED"){img.src=IMG.SEED;img.dataset.k="SEED";}l=mob?"#"+id+(p.water?" seed":" needs 💧"):(p.water?"Seed":"Needs water");bd=p.water?"💧":"";w=(S.t-p.start)/(p.due-p.start);aria+="plant "+id+", seed, "+(p.water?"watered":"needs water");}
       else if(p.stage==="sprout"){cls+=" has sprout";if(img.dataset.k!=="SPROUT"){img.src=IMG.SPROUT;img.dataset.k="SPROUT";}const need=[];if(!p.water)need.push("water");if(!p.fert)need.push("fertilizer");l=mob?"#"+id+(need.length?" needs "+(p.water?"":"💧")+(p.fert?"":"🧪"):" sprout"):(need.length?"Needs "+need.join(" + "):"Sprout");bd=(p.water?"💧":"")+(p.fert?"🧪":"");w=(S.t-p.start)/(p.due-p.start);aria+="plant "+id+", sprout, "+(need.length?"needs "+need.join(" and "):"watered and fertilized");}
       else{const k=phOf(p),th=S.t-p.lastWater>=45,rest=S.t<p.breedAt;cls+=" has bloom"+(th?" thirsty":"")+(par?" parent":"");l=(mob?"#"+id+" ":"")+PH[k].name+(th?(mob?" 💧!":" · thirsty!"):"");bd=(par?(mob?"P"+par:"Parent "+par):"")+(rest?"⏳":"");if(img.dataset.k!==k){img.src=IMG[PH[k].img];img.dataset.k=k;}
         w=Math.min(1,(S.t-p.lastWater)/60);aria+="plant "+id+", "+PH[k].name+" marigold in bloom"+(th?", thirsty, needs water":"")+(rest?", resting after a cross":"")+(par?", chosen as parent "+par:"");}
+      if(id===moveA){cls+=" parent";bd=(mob?"↔":"Moving")+bd;aria+=", chosen for replanting";}
       if(id===selId)cls+=" sel";}
     if(id===null)pid.textContent="";
     if(b.className!==cls)b.className=cls;
@@ -602,8 +618,8 @@ function init(){
   $("dmOk").onclick=()=>$("dlgMsg").close();
   $("deClose").onclick=()=>$("dlgEnd").close();
   $("deName").addEventListener("input",updCode);
-  document.addEventListener("keydown",e=>{if(anyDialog()||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=="radio")return;const n=parseInt(e.key,10);
-    if(n>=1&&n<=TOOLS.length){const r=document.querySelectorAll('input[name=tool]')[n-1];r.checked=true;tool=r.value;crossA=crossB=null;renderGrid();}});
+  document.addEventListener("keydown",e=>{if(anyDialog()||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=="radio")return;let n=parseInt(e.key,10);if(n===0)n=10;
+    if(n>=1&&n<=TOOLS.length){const r=document.querySelectorAll('input[name=tool]')[n-1];r.checked=true;tool=r.value;crossA=crossB=moveA=null;renderGrid();}});
   window.addEventListener("beforeunload",save);
   document.addEventListener("visibilitychange",()=>{lastReal=performance.now();syncMusic();if(document.hidden)save();});
   initMusic();
