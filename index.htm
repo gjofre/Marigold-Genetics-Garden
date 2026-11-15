@@ -76,6 +76,7 @@ details.jr select{width:100%;margin-top:4px;background:#0a2e19;color:var(--ink);
 .fb.ok{color:var(--good)}.fb.no{color:var(--bad)}
 .coach{background:#0a2e19;border-left:4px solid var(--teal2);border-radius:6px;padding:6px 10px;margin:0 0 10px;font-size:.92rem}
 .coach:empty{display:none}
+.starter-note{margin:0 0 8px}
 .hint{background:#0a2e19;border-left:4px solid var(--warn);padding:6px 10px;border-radius:6px;font-size:.88rem;margin-top:6px}
 table{border-collapse:collapse;width:100%;font-size:.86rem}
 th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
@@ -95,6 +96,7 @@ dialog{background:var(--card);color:var(--ink);border:2px solid var(--teal2);bor
 dialog h2[tabindex]{outline:none}
 dialog::backdrop{background:rgba(0,0,0,.65)}
 dialog select,dialog input[type=text]{background:#0a2e19;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px}
+.row[hidden]{display:none}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .code{font-family:ui-monospace,Consolas,monospace;font-size:1.25rem;background:#0a2e19;border:1px dashed var(--teal2);padding:8px 12px;border-radius:8px;display:inline-block;letter-spacing:1px;user-select:all}
 footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:10px 16px 24px}
@@ -117,7 +119,7 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
   .stats{gap:6px;font-size:.85rem}.stats button{padding:4px 8px}.stat{padding:2px 8px}.vol input{width:70px}
   section,aside>div{padding:10px}
   main[data-tab=garden] #p-garden{display:flex;flex-direction:column}
-  #p-garden h2{order:0}#tools{order:1}#coach{order:1;margin-bottom:8px}#log{order:2;margin:0 0 8px;min-height:0}#grid{order:3;padding:4px;gap:4px}#p-garden>p{order:4}
+  #p-garden h2{order:0}#tools{order:1}#coach{order:1;margin-bottom:8px}#p-garden>p.starter-note{order:1}#log{order:2;margin:0 0 8px;min-height:0}#grid{order:3;padding:4px;gap:4px}#p-garden>p{order:4}
   #log li:not(:first-child){display:none}
   .tile .lab{margin-bottom:3px;padding:0 3px}.tile .pid,.tile .bad{font-size:.6rem}
   .tile{font-size:.62rem;aspect-ratio:5/6}.tile.has img{inset:2px 2px 36%;width:calc(100% - 4px);height:calc(64% - 2px);filter:none}.tile .pid{display:none}.tile .lab{line-height:1.1}.tools label,#btnWaterAll{font-size:.82rem;padding:5px 7px}#btnWaterAll{padding:5px 10px;font-size:.9rem;background:#1d4ed8;border-color:#93c5fd}
@@ -153,6 +155,7 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
       <fieldset class="tools" id="tools">
         <legend>Pick a tool, then choose a tile</legend>
       </fieldset>
+      <p class="muted starter-note">🌰 Starter seeds are <strong>homozygous</strong> and their genotypes are given: WW, BB, RR and YY. The genotypes of their offspring are for you to work out.</p>
       <p id="coach" class="coach"></p>
       <div id="grid" role="group" aria-label="Garden patch, 5 rows by 5 columns. Use arrow keys to move between tiles."></div>
       <p class="muted" style="margin:8px 0 0">To cross: pick the Cross tool, choose any two blooming plants, then choose an empty tile for their seed. Each parent rests 20 seconds (⏳) before its next cross.</p>
@@ -187,17 +190,17 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
   <div class="dbody" id="helpBody" tabindex="0">
   <p>Marigold color is controlled by <strong>one gene with four alleles</strong>: W, B, R and Y. Every plant carries two alleles. Your job is to work out how they interact.</p>
   <ol>
-    <li><strong>Plant</strong> starter seeds (white, blue, red, yellow). <strong>Water</strong> a seed within 15 seconds or it will probably fail.</li>
+    <li><strong>Plant</strong> starter seeds (white, blue, red, yellow). Starter seeds are <strong>homozygous</strong> and their genotypes are given (WW, BB, RR, YY). <strong>Water</strong> a seed within 15 seconds or it will probably fail.</li>
     <li>Sprouts need <strong>water and fertilizer</strong> within 15 seconds to bloom on time. Without both they may bloom late or wither.</li>
     <li>The <strong>Water all</strong> button waters every plant in the patch at once. Fertilizer is still applied plant by plant.</li>
     <li>Blooming plants need water <strong>every 2 minutes</strong>. A plant turns thirsty (amber border) 30 seconds before the deadline and may wither if left dry.</li>
     <li>Like Mendel with his peas, <strong>you choose the crosses</strong>: with the Cross tool, pick any two blooming plants, then pick an empty tile where their seed will be planted.</li>
     <li><strong>Replant</strong> moves a plant to another tile (or swaps two plants), so you can organize the patch however you like.</li>
-    <li><strong>Collect</strong> a bloom to sell it for points. You can also identify its genotype for a bonus, but a wrong call costs points.</li>
+    <li><strong>Collect</strong> a bloom to sell it for points. For any plant that came from a cross, you can also identify its genotype for a bonus, but a wrong call costs points.</li>
     <li>Fill in the <strong>field journal</strong> for every color.</li>
   </ol>
   <p>Background music is off until you press the Music button in the header.</p>
-  <p>You finish when you have collected all 8 colors, completed all 8 journal entries, and correctly identified one blue plant of each of its genotypes. Your game saves automatically in this browser.</p>
+  <p>You finish when you have collected all 8 colors, completed all 8 journal entries, and correctly identified one blue offspring of each blue genotype. Your game saves automatically in this browser.</p>
   </div>
   <div class="more" id="helpMore" aria-hidden="true">▼ Scroll for more</div>
   <div class="dfoot"><button id="helpClose">Start gardening</button></div>
@@ -206,7 +209,7 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
 <dialog id="dlgCollect" aria-labelledby="dc">
   <h2 id="dc" tabindex="-1">Collect flower</h2>
   <div id="dcBody"></div>
-  <div class="row">
+  <div class="row" id="dcAlleles">
     <label>Allele 1 <select id="a1"></select></label>
     <label>Allele 2 <select id="a2"></select></label>
   </div>
@@ -263,16 +266,16 @@ const PATS={
   codom:"Codominance: a heterozygote showing both parental colors side by side"
 };
 const PACKET={W:"White",B:"Blue",R:"Red",Y:"Yellow"};
-const TOOLS=[["inspect","🔍 Inspect"],["plantW","🌰 White seed"],["plantB","🌰 Blue seed"],["plantR","🌰 Red seed"],["plantY","🌰 Yellow seed"],["water","💧 Water"],["fert","🧪 Fertilizer"],["cross","🖌️ Cross"],["collect","✂️ Collect"],["move","🪴 Replant"]];
-const SAVE_KEY="marigoldGenetics_v2", SALT="biol151-marigold-2026";
+const TOOLS=[["inspect","🔍 Inspect"],["plantW","🌰 White seed (WW)"],["plantB","🌰 Blue seed (BB)"],["plantR","🌰 Red seed (RR)"],["plantY","🌰 Yellow seed (YY)"],["water","💧 Water"],["fert","🧪 Fertilizer"],["cross","🖌️ Cross"],["collect","✂️ Collect"],["move","🪴 Replant"]];
+const SAVE_KEY="marigoldGenetics_v3", SALT="biol151-marigold-2026";
 const N=5, THIRST=120;
 let S, tool="inspect", selId=null, crossA=null, crossB=null, moveA=null, userPaused=false, lastReal=performance.now(), rng=Math.random;
 const $=id=>document.getElementById(id);
 const norm=(a,b)=>ORDER.indexOf(a)<=ORDER.indexOf(b)?a+b:b+a;
 const pick=a=>a[Math.floor(rng()*a.length)];
-function fresh(){return{v:2,t:0,nextId:1,grid:Array(N*N).fill(null),plants:{},score:0,crosses:0,discovered:{},collected:{},sales:{},journal:{},blueID:{BB:false,BR:false,BY:false},log:[],done:false,name:""};}
+function fresh(){return{v:3,t:0,nextId:1,grid:Array(N*N).fill(null),plants:{},score:0,crosses:0,discovered:{},collected:{},sales:{},journal:{},blueID:{BB:false,BR:false,BY:false},log:[],done:false,name:""};}
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
-function load(){try{const r=localStorage.getItem(SAVE_KEY);if(r){const o=JSON.parse(r);if(o&&o.v===2)return o;}}catch(e){}return null;}
+function load(){try{const r=localStorage.getItem(SAVE_KEY);if(r){const o=JSON.parse(r);if(o&&o.v===3){Object.values(o.plants).forEach(p=>{if(p.packet)p.revealed=true;});return o;}}}catch(e){}return null;}
 function addScore(n){S.score=Math.max(0,S.score+n);}
 function say(msg){S.log.unshift(msg);S.log.length=Math.min(S.log.length,6);renderLog();}
 function neighbors(i){const r=Math.floor(i/N),c=i%N,o=[];if(r>0)o.push(i-N);if(r<N-1)o.push(i+N);if(c>0)o.push(i-1);if(c<N-1)o.push(i+1);return o;}
@@ -286,10 +289,9 @@ function newPlant(g,tile,parents,packet){
 }
 function plantSeed(tile,allele){
   if(S.grid[tile]!==null){say("That tile is already occupied.");return;}
-  let g=allele+allele;
-  if(allele==="B")g=pick(["BB","BR","BY"]);
-  const p=newPlant(g,tile,null,allele);
-  say("Planted a "+PACKET[allele].toLowerCase()+" starter seed (#"+p.id+"). Water it within 15 seconds.");
+  const g=allele+allele;
+  const p=newPlant(g,tile,null,allele);p.revealed=true;
+  say("Planted a "+PACKET[allele].toLowerCase()+" starter seed (#"+p.id+", genotype "+g+"). Water it within 15 seconds.");
 }
 function removePlant(p,fate){if(moveA===p.id)moveA=null;if(crossA===p.id||crossB===p.id){crossA=crossB=null;}S.grid[p.tile]=null;p.tile=-1;p.stage="gone";p.fate=fate;}
 function water(p){
@@ -371,17 +373,17 @@ function crossTile(i){
 let collecting=null;
 function openCollect(p){
   if(p.stage!=="bloom"){say("Only blooming plants can be collected.");return;}
-  collecting=p;const k=phOf(p),isBlue=k==="blue",enough=p.kids.length>=3;
-  $("dcBody").innerHTML='<p>'+chip(p)+'</p><p>Selling this flower earns <strong>'+saleValue(k)+'</strong> point'+(saleValue(k)===1?'':'s')+'. You may also identify its genotype.</p>'
+  collecting=p;const k=phOf(p),isBlue=k==="blue";
+  $("dcBody").innerHTML='<p>'+chip(p)+'</p><p>Selling this flower earns <strong>'+saleValue(k)+'</strong> point'+(saleValue(k)===1?'':'s')+'. '+(p.packet?'':'You may also identify its genotype.')+'</p>'
     +'<div class="hint"><strong>Before you sell:</strong> the goal is to find all 8 flower colors ('+found()+' of 8 so far), and new colors only come from crossing plants. '
     +(p.kids.length?'This plant has '+p.kids.length+' offspring on record. Once collected, it cannot be crossed again.':'<strong>This plant has not been crossed yet.</strong> Once collected, it is gone. Consider cancelling and using the Cross tool first.')+'</div>';
-  $("dcNote").textContent=isBlue?(enough?"Blue: a correct call earns up to +150, a wrong call costs −100. This plant has "+p.kids.length+" offspring on record.":"Blue plants need evidence: this one has "+p.kids.length+" offspring on record, and you need at least 3 before you can identify it."):"Correct call: +10. Wrong call: −10.";
-  $("dcId").disabled=isBlue&&!enough;
+  $("dcAlleles").hidden=!!p.packet;$("dcId").hidden=!!p.packet;$("dcSell").textContent=p.packet?"Collect":"Collect without identifying";
+  $("dcNote").innerHTML=p.packet?"This is a starter plant, so its genotype is already known ("+p.g+"). There is nothing to identify.":isBlue?"Blue: a correct call earns up to +150, a wrong call costs −100. This plant has "+p.kids.length+" offspring on record.<br><strong>Hint:</strong> not sure? Cancel, cross this blue plant with homozygous plants (any starter works), and see what colors the offspring show before you decide.":"Correct call: +10. Wrong call: −10.";
   $("dlgCollect").showModal();$("dc").focus();
 }
 function saleValue(k){return (S.sales[k]||0)<3?PH[k].value:1;}
 function finishCollect(identify){
-  const p=collecting;if(!p)return;collecting=null;$("dlgCollect").close();
+  const p=collecting;if(!p)return;if(p.packet)identify=false;collecting=null;$("dlgCollect").close();
   const k=phOf(p),v=saleValue(k);let msg="Sold a "+PH[k].name+" marigold for "+v+" point"+(v===1?"":"s")+".";
   S.sales[k]=(S.sales[k]||0)+1;S.collected[k]=(S.collected[k]||0)+1;addScore(v);
   if(identify){
@@ -420,9 +422,9 @@ function afterChange(){renderAll();if(!S.done&&goalsMet())finish();save();}
 function chip(p){
   if(!p)return"";
   let label="#"+p.id+" ";
-  if(p.bloomed){const k=phOf(p);label+=PH[k].name+(p.revealed?" (confirmed "+p.g+")":"");
+  if(p.bloomed){const k=phOf(p);label+=PH[k].name+(p.packet?" ("+p.g+")":(p.revealed?" (confirmed "+p.g+")":""));
     return'<span class="chip"><img src="'+IMG[PH[k].img]+'" alt="">'+label+status(p)+'</span>';}
-  label+=p.packet?PACKET[p.packet]+" starter seed":"seed, color unknown";
+  label+=p.packet?PACKET[p.packet]+" starter seed ("+p.g+")":"seed, color unknown";
   return'<span class="chip noimg">'+label+status(p)+'</span>';
 }
 function status(p){return p.stage==="gone"?" · "+p.fate:(p.packet&&p.bloomed?" · starter":"");}
@@ -466,8 +468,8 @@ function renderGrid(){
     else{const p=S.plants[id];pid.textContent="#"+id;
       if(p.stage==="seed"){cls+=" has seed";if(img.dataset.k!=="SEED"){img.src=IMG.SEED;img.dataset.k="SEED";}l=mob?"#"+id+(p.water?" seed":" needs 💧"):(p.water?"Seed":"Needs water");bd=p.water?"💧":"";w=(S.t-p.start)/(p.due-p.start);aria+="plant "+id+", seed, "+(p.water?"watered":"needs water");}
       else if(p.stage==="sprout"){cls+=" has sprout";if(img.dataset.k!=="SPROUT"){img.src=IMG.SPROUT;img.dataset.k="SPROUT";}const need=[];if(!p.water)need.push("water");if(!p.fert)need.push("fertilizer");l=mob?"#"+id+(need.length?" needs "+(p.water?"":"💧")+(p.fert?"":"🧪"):" sprout"):(need.length?"Needs "+need.join(" + "):"Sprout");bd=(p.water?"💧":"")+(p.fert?"🧪":"");w=(S.t-p.start)/(p.due-p.start);aria+="plant "+id+", sprout, "+(need.length?"needs "+need.join(" and "):"watered and fertilized");}
-      else{const k=phOf(p),th=S.t-p.lastWater>=THIRST-30,rest=S.t<p.breedAt;cls+=" has bloom"+(th?" thirsty":"")+(par?" parent":"");l=(mob?"#"+id+" ":"")+PH[k].name+(th?(mob?" 💧!":" · thirsty!"):"");bd=(par?(mob?"P"+par:"Parent "+par):"")+(rest?"⏳":"");if(img.dataset.k!==k){img.src=IMG[PH[k].img];img.dataset.k=k;}
-        w=Math.min(1,(S.t-p.lastWater)/THIRST);aria+="plant "+id+", "+PH[k].name+" marigold in bloom"+(th?", thirsty, needs water":"")+(rest?", resting after a cross":"")+(par?", chosen as parent "+par:"");}
+      else{const k=phOf(p),th=S.t-p.lastWater>=THIRST-30,rest=S.t<p.breedAt;cls+=" has bloom"+(th?" thirsty":"")+(par?" parent":"");l=(mob?"#"+id+" ":"")+PH[k].name+(p.packet?" "+p.g:"")+(th?(mob?" 💧!":" · thirsty!"):"");bd=(par?(mob?"P"+par:"Parent "+par):"")+(rest?"⏳":"");if(img.dataset.k!==k){img.src=IMG[PH[k].img];img.dataset.k=k;}
+        w=Math.min(1,(S.t-p.lastWater)/THIRST);aria+="plant "+id+", "+PH[k].name+" marigold in bloom"+(p.packet?", starter with genotype "+p.g:"")+(th?", thirsty, needs water":"")+(rest?", resting after a cross":"")+(par?", chosen as parent "+par:"");}
       if(id===moveA){cls+=" parent";bd=(mob?"↔":"Moving")+bd;aria+=", chosen for replanting";}
       if(id===selId)cls+=" sel";}
     if(id===null)pid.textContent="";
@@ -495,7 +497,7 @@ function coachText(){
   const todo=PHKEYS.filter(k=>!S.journal[k]).length;
   if(todo)return"All 8 colors found. Now record each one in the field journal ("+todo+" left).";
   if(!PHKEYS.every(k=>S.collected[k]))return"Collect at least one flower of every color to finish that goal.";
-  if(!(S.blueID.BB&&S.blueID.BR&&S.blueID.BY))return"Last goal: work out which blue plants are which. Cross a blue with a white several times, then Collect it and identify its genotype.";
+  if(!(S.blueID.BB&&S.blueID.BR&&S.blueID.BY))return"Last goal: work out which blue plants are which. Blue offspring can be BB, BR or BY. Cross them with homozygous starters, look at the offspring, then Collect each one and identify its genotype.";
   return"";
 }
 function renderCoach(){const t=coachText(),c=$("coach"),h=t?"<strong>Next step:</strong> "+t:"";if(c.innerHTML!==h)c.innerHTML=h;}
@@ -505,7 +507,7 @@ function renderGoals(){
   const mark=b=>b?"✅":"⬜";
   let h='<div class="goal"><span aria-hidden="true">'+mark(c===8)+'</span><span>Collect all 8 flower colors: <strong>'+c+' of 8</strong></span></div>'
    +'<div class="goal"><span aria-hidden="true">'+mark(j===8)+'</span><span>Complete all 8 journal entries: <strong>'+j+' of 8</strong></span></div>'
-   +'<div class="goal"><span aria-hidden="true">'+mark(S.blueID.BB&&S.blueID.BR&&S.blueID.BY)+'</span><span>Correctly identify a blue plant of each genotype when collecting: <strong>'+Object.values(S.blueID).filter(Boolean).length+' of 3</strong></span></div>';
+   +'<div class="goal"><span aria-hidden="true">'+mark(S.blueID.BB&&S.blueID.BR&&S.blueID.BY)+'</span><span>Correctly identify a blue offspring of each genotype when collecting: <strong>'+Object.values(S.blueID).filter(Boolean).length+' of 3</strong></span></div>';
   if(S.done)h+='<p><button id="showCode">Show completion code</button></p>';
   $("goals").innerHTML=h;
   if(S.done)$("showCode").onclick=openEnd;
@@ -518,7 +520,7 @@ function buildJournal(){
      +'<div class="form"><fieldset><legend>Which genotypes give this color? Select all that apply.</legend><div class="gbox">'
      +GENOS.map(g=>'<label><input type="checkbox" value="'+g+'"> '+g+'</label>').join("")+'</div></fieldset>'
      +'<label>Inheritance pattern<select><option value="">Choose a pattern…</option>'+Object.entries(PATS).map(([v,t])=>'<option value="'+v+'">'+t+'</option>').join("")+'</select></label>'
-     +(k==="blue"?'<div class="hint"><strong>Hint:</strong> blue plants can look identical and still differ genetically. Try a <strong>test cross</strong>: cross a blue plant with a white one and watch what colors their offspring show. Several offspring tell you more than one.</div>':'')
+     +(k==="blue"?'<div class="hint"><strong>Hint:</strong> blue plants can look identical and still differ genetically. Starter blues are BB, but a blue that came from a cross may carry a hidden allele. Try crossing blue plants with homozygous plants (any starter) and see what colors the offspring show. Several offspring tell you more than one.</div>':'')
      +'<div class="row"><button type="button">Submit entry</button></div></div><p class="fb" role="status"></p>';
     d.querySelector("button").addEventListener("click",()=>submitJournal(k));
     j.appendChild(d);
@@ -559,7 +561,7 @@ function renderSel(){
     else if(p.stage==="bloom")tip=(p.kids.length?"This plant has been crossed. More offspring from the same pair make the pattern clearer, and new partners can reveal new colors.":"<strong>This plant has not been crossed yet.</strong> Choose the Cross tool, pick this plant and another bloom, then an empty tile for their seed.")+" Blooms need water every 2 minutes.";
   }
   let h='<p class="muted" style="margin-top:0"><strong>Goal:</strong> find all 8 flower colors by crossing plants ('+found()+' of 8 so far), then work out their genotypes.</p>'+(tip?'<div class="hint" style="margin:0 0 10px"><strong>Tip:</strong> '+tip+'</div>':'')+'<h3>Pedigree (parents listed beneath each plant)</h3><div style="margin:6px 0 12px">'+ped(p.id,0)+'</div>';
-  if(!p.p)h+='<p class="muted">This plant grew from a starter seed, so it has no recorded parents.</p>';
+  if(!p.p)h+='<p class="muted">This plant grew from a starter seed, so its genotype is known ("+p.g+") and it has no recorded parents.</p>';
   h+='<h3>Offspring</h3>';
   if(!p.kids.length)h+='<p class="muted">No offspring yet.</p>';
   else{const by={};p.kids.forEach(i=>{const k=S.plants[i],m=k.p[0]===p.id?k.p[1]:k.p[0];(by[m]=by[m]||[]).push(i);});
