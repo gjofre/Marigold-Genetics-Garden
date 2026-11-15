@@ -196,11 +196,11 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
     <li>Blooming plants need water <strong>every 2 minutes</strong>. A plant turns thirsty (amber border) 30 seconds before the deadline and may wither if left dry.</li>
     <li>Like Mendel with his peas, <strong>you choose the crosses</strong>: with the Cross tool, pick any two blooming plants, then pick an empty tile where their seed will be planted.</li>
     <li><strong>Replant</strong> moves a plant to another tile (or swaps two plants), so you can organize the patch however you like.</li>
-    <li><strong>Collect</strong> a bloom to sell it for points. For any plant that came from a cross, you can also identify its genotype for a bonus, but a wrong call costs points.</li>
+    <li><strong>Collect</strong> a bloom to sell it for points. For any plant that came from a cross, you can also identify its genotype: the first correct call for each genotype earns +50, and a wrong call costs −25.</li>
     <li>Fill in the <strong>field journal</strong> for every color.</li>
   </ol>
   <p>Background music is off until you press the Music button in the header.</p>
-  <p>You finish when you have collected all 8 colors, completed all 8 journal entries, and correctly identified one blue offspring of each blue genotype. Your game saves automatically in this browser.</p>
+  <p>You finish when you have collected all 8 colors, completed all 8 journal entries, and correctly identified an offspring of each of the 10 genotypes. Your game saves automatically in this browser.</p>
   </div>
   <div class="more" id="helpMore" aria-hidden="true">▼ Scroll for more</div>
   <div class="dfoot"><button id="helpClose">Start gardening</button></div>
@@ -273,9 +273,9 @@ let S, tool="inspect", selId=null, crossA=null, crossB=null, moveA=null, userPau
 const $=id=>document.getElementById(id);
 const norm=(a,b)=>ORDER.indexOf(a)<=ORDER.indexOf(b)?a+b:b+a;
 const pick=a=>a[Math.floor(rng()*a.length)];
-function fresh(){return{v:3,t:0,nextId:1,grid:Array(N*N).fill(null),plants:{},score:0,crosses:0,discovered:{},collected:{},sales:{},journal:{},blueID:{BB:false,BR:false,BY:false},log:[],done:false,name:""};}
+function fresh(){return{v:3,t:0,nextId:1,grid:Array(N*N).fill(null),plants:{},score:0,crosses:0,discovered:{},collected:{},sales:{},journal:{},idDone:{},log:[],done:false,name:""};}
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
-function load(){try{const r=localStorage.getItem(SAVE_KEY);if(r){const o=JSON.parse(r);if(o&&o.v===3){Object.values(o.plants).forEach(p=>{if(p.packet)p.revealed=true;});return o;}}}catch(e){}return null;}
+function load(){try{const r=localStorage.getItem(SAVE_KEY);if(r){const o=JSON.parse(r);if(o&&o.v===3){if(!o.idDone){o.idDone={};if(o.blueID)for(const g in o.blueID)if(o.blueID[g])o.idDone[g]=true;}Object.values(o.plants).forEach(p=>{if(p.packet)p.revealed=true;});return o;}}}catch(e){}return null;}
 function addScore(n){S.score=Math.max(0,S.score+n);}
 function say(msg){S.log.unshift(msg);S.log.length=Math.min(S.log.length,6);renderLog();}
 function neighbors(i){const r=Math.floor(i/N),c=i%N,o=[];if(r>0)o.push(i-N);if(r<N-1)o.push(i+N);if(c>0)o.push(i-1);if(c<N-1)o.push(i+1);return o;}
@@ -378,7 +378,7 @@ function openCollect(p){
     +'<div class="hint"><strong>Before you sell:</strong> the goal is to find all 8 flower colors ('+found()+' of 8 so far), and new colors only come from crossing plants. '
     +(p.kids.length?'This plant has '+p.kids.length+' offspring on record. Once collected, it cannot be crossed again.':'<strong>This plant has not been crossed yet.</strong> Once collected, it is gone. Consider cancelling and using the Cross tool first.')+'</div>';
   $("dcAlleles").hidden=!!p.packet;$("dcId").hidden=!!p.packet;$("dcSell").textContent=p.packet?"Collect":"Collect without identifying";
-  $("dcNote").innerHTML=p.packet?"This is a starter plant, so its genotype is already known ("+p.g+"). There is nothing to identify.":isBlue?"Blue: a correct call earns up to +150, a wrong call costs −100. This plant has "+p.kids.length+" offspring on record.<br><strong>Hint:</strong> not sure? Cancel, cross this blue plant with homozygous plants (any starter works), and see what colors the offspring show before you decide.":"Correct call: +10. Wrong call: −10.";
+  $("dcNote").innerHTML=p.packet?"This is a starter plant, so its genotype is already known ("+p.g+"). There is nothing to identify.":"The first correct identification of each genotype earns +50. A genotype you have already confirmed earns 0. A wrong call costs −25."+(isBlue?"<br><strong>Hint:</strong> blue plants can hide an allele. Not sure? Cancel, cross this plant with homozygous plants (any starter works), and see what colors the offspring show before you decide.":"");
   $("dlgCollect").showModal();$("dc").focus();
 }
 function saleValue(k){return (S.sales[k]||0)<3?PH[k].value:1;}
@@ -389,13 +389,12 @@ function finishCollect(identify){
   if(identify){
     const guess=norm($("a1").value,$("a2").value);p.revealed=true;
     if(guess===p.g){
-      let b=10;
-      if(k==="blue"){b=S.blueID[p.g]?30:150;S.blueID[p.g]=true;}
-      addScore(b);msg+=" Genotype call "+guess+" was correct: +"+b+".";
-      showMsg("Correct!", "<p>Plant #"+p.id+" was <strong>"+p.g+"</strong>. +"+b+" points.</p>");
+      const first=!S.idDone[p.g],b=first?50:0;S.idDone[p.g]=true;addScore(b);
+      msg+=" Genotype call "+guess+" was correct"+(first?": +50.":", but "+guess+" was already confirmed: no points.");
+      showMsg("Correct!","<p>Plant #"+p.id+" was <strong>"+p.g+"</strong>. "+(first?"+50 points for the first confirmed "+p.g+".":"You had already confirmed "+p.g+", so there are no points this time.")+"</p>");
     }else{
-      const pen=k==="blue"?100:10;addScore(-pen);msg+=" Genotype call "+guess+" was wrong: −"+pen+".";
-      showMsg("Not this time","<p>You called "+guess+", but plant #"+p.id+" was <strong>"+p.g+"</strong>. −"+pen+" points.</p><p class='muted'>Look at its offspring in the cross log: what did they tell you?</p>");
+      addScore(-25);msg+=" Genotype call "+guess+" was wrong: −25.";
+      showMsg("Not this time","<p>You called "+guess+", but plant #"+p.id+" was <strong>"+p.g+"</strong>. −25 points.</p><p class='muted'>Look at its parents and offspring in the cross log: what did they tell you?</p>");
     }
   }
   removePlant(p,"collected");say(msg);afterChange();
@@ -403,7 +402,7 @@ function finishCollect(identify){
 function showMsg(t,html){$("dm").textContent=t;$("dmBody").innerHTML=html;$("dlgMsg").showModal();}
 
 /* ---------- completion ---------- */
-function goalsMet(){return PHKEYS.every(k=>S.collected[k])&&PHKEYS.every(k=>S.journal[k])&&S.blueID.BB&&S.blueID.BR&&S.blueID.BY;}
+function goalsMet(){return PHKEYS.every(k=>S.collected[k])&&PHKEYS.every(k=>S.journal[k])&&GENOS.every(g=>S.idDone[g]);}
 function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(36).toUpperCase().padStart(7,"0");}
 function makeCode(name){const pay=[S.score,Math.floor(S.t),S.crosses].map(n=>n.toString(36).toUpperCase()).join("-");return"MG-"+pay+"-"+hash(name.trim().toLowerCase()+"|"+pay+"|"+SALT);}
 function checkCode(name,code){const m=/^MG-([0-9A-Z]+)-([0-9A-Z]+)-([0-9A-Z]+)-([0-9A-Z]+)$/.exec(code.trim().toUpperCase());if(!m)return null;const pay=m.slice(1,4).join("-");if(hash(name.trim().toLowerCase()+"|"+pay+"|"+SALT)!==m[4])return null;return{score:parseInt(m[1],36),time:parseInt(m[2],36),crosses:parseInt(m[3],36)};}
@@ -497,17 +496,18 @@ function coachText(){
   const todo=PHKEYS.filter(k=>!S.journal[k]).length;
   if(todo)return"All 8 colors found. Now record each one in the field journal ("+todo+" left).";
   if(!PHKEYS.every(k=>S.collected[k]))return"Collect at least one flower of every color to finish that goal.";
-  if(!(S.blueID.BB&&S.blueID.BR&&S.blueID.BY))return"Last goal: work out which blue plants are which. Blue offspring can be BB, BR or BY. Cross them with homozygous starters, look at the offspring, then Collect each one and identify its genotype.";
+  const nid=GENOS.filter(g=>S.idDone[g]).length;
+  if(nid<10)return nid+" of 10 genotypes confirmed. Grow offspring, work out each one's genotype from its parents and offspring, then Collect it and identify it. Each genotype pays once.";
   return"";
 }
 function renderCoach(){const t=coachText(),c=$("coach"),h=t?"<strong>Next step:</strong> "+t:"";if(c.innerHTML!==h)c.innerHTML=h;}
 function renderLog(){$("log").innerHTML=S.log.map(m=>"<li>"+m+"</li>").join("");}
 function renderGoals(){
-  const c=PHKEYS.filter(k=>S.collected[k]).length,j=PHKEYS.filter(k=>S.journal[k]).length;
+  const c=PHKEYS.filter(k=>S.collected[k]).length,j=PHKEYS.filter(k=>S.journal[k]).length,nid=GENOS.filter(g=>S.idDone[g]).length;
   const mark=b=>b?"✅":"⬜";
   let h='<div class="goal"><span aria-hidden="true">'+mark(c===8)+'</span><span>Collect all 8 flower colors: <strong>'+c+' of 8</strong></span></div>'
    +'<div class="goal"><span aria-hidden="true">'+mark(j===8)+'</span><span>Complete all 8 journal entries: <strong>'+j+' of 8</strong></span></div>'
-   +'<div class="goal"><span aria-hidden="true">'+mark(S.blueID.BB&&S.blueID.BR&&S.blueID.BY)+'</span><span>Correctly identify a blue offspring of each genotype when collecting: <strong>'+Object.values(S.blueID).filter(Boolean).length+' of 3</strong></span></div>';
+   +'<div class="goal"><span aria-hidden="true">'+mark(nid===10)+'</span><span>Correctly identify an offspring of each of the 10 genotypes when collecting: <strong>'+nid+' of 10</strong>'+(nid?'<br><span class="muted">Confirmed: '+GENOS.filter(g=>S.idDone[g]).join(", ")+'</span>':'')+'</span></div>';
   if(S.done)h+='<p><button id="showCode">Show completion code</button></p>';
   $("goals").innerHTML=h;
   if(S.done)$("showCode").onclick=openEnd;
