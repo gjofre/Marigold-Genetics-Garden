@@ -33,6 +33,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .tools input{position:absolute;opacity:0;width:1px;height:1px}
 .tools label:has(input:checked){background:var(--teal);border-color:var(--teal2);color:#fff;font-weight:700}
 .tools label:has(input:focus-visible){outline:3px solid #fde047;outline-offset:2px}
+.seedwrap{position:relative;display:inline-flex}
+#seedNow{font-weight:700}
+#seedMenu{position:absolute;top:calc(100% + 4px);left:0;z-index:6;display:flex;flex-direction:column;gap:4px;background:var(--card);border:2px solid var(--teal2);border-radius:10px;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.5);min-width:170px}
+#seedMenu[hidden]{display:none}
+#seedMenu button{display:flex;align-items:center;gap:8px;background:var(--card2);color:var(--ink);text-align:left;padding:5px 10px;white-space:nowrap}
+#seedMenu button img{width:26px;height:26px;object-fit:contain}
+#seedMenu button[aria-checked=true]{background:var(--teal);border-color:var(--teal2);color:#fff}
+#seedMenu button[aria-checked=true]::after{content:"✓";margin-left:auto}
 #btnWaterAll{padding:5px 10px;font-size:.9rem;background:#1d4ed8;border-color:#93c5fd}
 #btnWaterAll kbd{color:#e0ecff;background:#0b2a6b}
 .tools kbd{font-size:.72rem;background:#0a2e19;border-radius:4px;padding:0 4px;color:var(--muted)}
@@ -80,6 +88,7 @@ ul.ped li{margin:4px 0}
 details.jr{background:var(--card2);border:1px solid var(--line);border-radius:8px;margin:6px 0;padding:6px 10px}
 details.jr summary{cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600}
 details.jr summary img{width:38px;height:38px;object-fit:contain}
+details.jr summary .st{margin-left:auto;font-weight:600;color:var(--teal2)}
 details.jr.done{border-color:#22c55e}
 details.jr fieldset{border:1px solid var(--line);border-radius:8px;margin:8px 0;padding:6px 10px}
 details.jr .gbox{display:grid;grid-template-columns:repeat(5,auto);gap:2px 10px}
@@ -135,7 +144,8 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
   #p-garden h2{order:0}#tools{order:1}#coach{order:1;margin-bottom:8px}#p-garden>p.starter-note{order:1}#log{order:2;margin:0 0 8px;min-height:0}#grid{order:3;padding:4px;gap:4px}#p-garden>p{order:4}
   #log li:not(:first-child){display:none}
   .tile .lab{margin-bottom:3px;padding:0 3px}.tile .pid,.tile .bad{font-size:.6rem}
-  .tile{font-size:.62rem;aspect-ratio:5/6}.tile.has img{inset:2px 2px 36%;width:calc(100% - 4px);height:calc(64% - 2px);filter:none}.tile .pid{display:none}.tile .lab{line-height:1.1}.tools label,#btnWaterAll{font-size:.82rem;padding:5px 7px}#btnWaterAll{padding:5px 10px;font-size:.9rem;background:#1d4ed8;border-color:#93c5fd}
+  .tile{font-size:.62rem;aspect-ratio:5/6}.tile.has img{inset:2px 2px 36%;width:calc(100% - 4px);height:calc(64% - 2px);filter:none}.tile .pid{display:none}.tile .lab{line-height:1.1}.tools label,#btnWaterAll{font-size:.82rem;padding:5px 7px}#seedPick{background:#0a2e19;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 6px;font-size:.9rem;margin-left:-2px}
+#btnWaterAll{padding:5px 10px;font-size:.9rem;background:#1d4ed8;border-color:#93c5fd}
 #btnWaterAll kbd{color:#e0ecff;background:#0b2a6b}
 .tools kbd{display:none}
 }
@@ -148,6 +158,7 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
     <span class="stat">Score: <span id="score">0</span></span>
     <span class="stat">Time: <span id="clock">0:00</span></span>
     <span class="stat">Crosses: <span id="crosses">0</span></span>
+    <span class="stat">Mode: <span id="modeStat">Standard</span></span>
     <button id="btnPause" class="secondary" aria-pressed="false">Pause</button>
     <button id="btnMenu" class="secondary" aria-expanded="false" aria-controls="menu">☰ Menu</button>
     <div id="menu">
@@ -168,7 +179,7 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
       <fieldset class="tools" id="tools">
         <legend>Pick a tool, then choose a tile</legend>
       </fieldset>
-      <p class="muted starter-note">🌰 Starter seeds are <strong>homozygous</strong> and their genotypes are given: WW, BB, RR and YY. The genotypes of their offspring are for you to work out.</p>
+      <p class="muted starter-note" id="starterNote"></p>
       <p id="coach" class="coach"></p>
       <div id="grid" role="group" aria-label="Garden patch, 5 rows by 5 columns. Use arrow keys to move between tiles."></div>
       <p class="muted" style="margin:8px 0 0">To cross: pick the Cross tool, choose any two blooming plants, then choose an empty tile for their seed. Each parent rests 20 seconds (⏳) before its next cross.</p>
@@ -182,7 +193,7 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
     </div>
     <div id="p-journal">
       <h2>Field journal</h2>
-      <p class="muted" style="margin-top:0">A color appears here once it blooms. For each color, record every genotype that produces it and the inheritance pattern. Correct entry: +100. Wrong entry: −20.</p>
+      <p class="muted" style="margin-top:0">A color appears here once it blooms. <strong>Click or tap each discovered color to open its entry</strong>, then record every genotype that produces it and its inheritance pattern. Correct entry: +100. Wrong entry: −20.</p>
       <div id="journal"></div>
     </div>
     <div id="p-sel">
@@ -213,6 +224,7 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
     <li>Fill in the <strong>field journal</strong> for every color.</li>
   </ol>
   <p>Background music is off until you press the Music button in the header.</p>
+  <p><strong>Challenge mode</strong> unlocks when you finish a standard game. In it every seed is a mystery: its color is random and its genotype is hidden, so even plants grown from seed must be worked out. The goals stay the same. Start it from New game.</p>
   <p>You finish when you have collected all 8 colors, completed all 8 journal entries, and correctly identified an offspring of each of the 10 genotypes. Your game saves automatically in this browser.</p>
   </div>
   <div class="more" id="helpMore" aria-hidden="true">▼ Scroll for more</div>
@@ -241,9 +253,10 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
 </dialog>
 
 <dialog id="dlgNew" aria-labelledby="dn">
-  <h2 id="dn">Start a new game?</h2>
+  <h2 id="dn" tabindex="-1">Start a new game?</h2>
   <p>This erases your saved garden, journal and score.</p>
-  <div class="row"><button id="dnYes">Erase and restart</button><button id="dnNo" class="secondary">Keep playing</button></div>
+  <p class="muted" id="dnNote"></p>
+  <div class="row"><button id="dnYes">New standard game</button><button id="dnChal">New challenge game</button><button id="dnNo" class="secondary">Keep playing</button></div>
 </dialog>
 
 <dialog id="dlgEnd" aria-labelledby="de">
@@ -252,7 +265,8 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
   <p><label>Type your name to generate your completion code:<br><input type="text" id="deName" autocomplete="name" style="width:100%"></label></p>
   <p><span class="code" id="deCode">—</span></p>
   <p class="muted">Take a screenshot of this window showing your name, score and code.</p>
-  <div class="row"><button id="deClose" class="secondary">Close</button></div>
+  <p id="deChalNote" class="hint"></p>
+  <div class="row"><button id="deChal">Start challenge mode</button><button id="deClose" class="secondary">Close</button></div>
 </dialog>
 
 <script>
@@ -279,16 +293,21 @@ const PATS={
   codom:"Codominance: a heterozygote showing both parental colors side by side"
 };
 const PACKET={W:"White",B:"Blue",R:"Red",Y:"Yellow"};
-const TOOLS=[["inspect","🔍 Inspect"],["plantW","🌰 White seed (WW)"],["plantB","🌰 Blue seed (BB)"],["plantR","🌰 Red seed (RR)"],["plantY","🌰 Yellow seed (YY)"],["water","💧 Water"],["fert","🧪 Fertilizer"],["cross","🖌️ Cross"],["collect","✂️ Collect"],["move","🪴 Replant"]];
+const TOOLS=[["inspect","🔍 Inspect"],["plant","🌰 Plant seed"],["water","💧 Water"],["fert","🧪 Fertilizer"],["cross","🖌️ Cross"],["collect","✂️ Collect"],["move","🪴 Replant"]];
 const SAVE_KEY="marigoldGenetics_v3", SALT="biol151-marigold-2026";
 const N=5, THIRST=120;
+let seedColor="W";
 let S, tool="inspect", selId=null, crossA=null, crossB=null, moveA=null, userPaused=false, lastReal=performance.now(), rng=Math.random;
 const $=id=>document.getElementById(id);
+const UKEY="marigoldGenetics_unlock";let unlockedMem=false;
+function isUnlocked(){if(unlockedMem)return true;try{return localStorage.getItem(UKEY)==="1";}catch(e){return false;}}
+function unlock(){unlockedMem=true;try{localStorage.setItem(UKEY,"1");}catch(e){}}
+const chal=()=>S.mode==="challenge";
 const norm=(a,b)=>ORDER.indexOf(a)<=ORDER.indexOf(b)?a+b:b+a;
 const pick=a=>a[Math.floor(rng()*a.length)];
-function fresh(){return{v:3,t:0,nextId:1,grid:Array(N*N).fill(null),plants:{},score:0,crosses:0,discovered:{},collected:{},sales:{},journal:{},idDone:{},log:[],done:false,name:""};}
+function fresh(mode){return{mode:mode||"standard",v:3,t:0,nextId:1,grid:Array(N*N).fill(null),plants:{},score:0,crosses:0,discovered:{},collected:{},sales:{},journal:{},idDone:{},log:[],done:false,name:""};}
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
-function load(){try{const r=localStorage.getItem(SAVE_KEY);if(r){const o=JSON.parse(r);if(o&&o.v===3){if(!o.idDone){o.idDone={};if(o.blueID)for(const g in o.blueID)if(o.blueID[g])o.idDone[g]=true;}Object.values(o.plants).forEach(p=>{if(p.packet)p.revealed=true;});return o;}}}catch(e){}return null;}
+function load(){try{const r=localStorage.getItem(SAVE_KEY);if(r){const o=JSON.parse(r);if(o&&o.v===3){if(!o.mode)o.mode="standard";if(!o.idDone){o.idDone={};if(o.blueID)for(const g in o.blueID)if(o.blueID[g])o.idDone[g]=true;}Object.values(o.plants).forEach(p=>{if(p.packet)p.revealed=true;});return o;}}}catch(e){}return null;}
 function addScore(n){S.score=Math.max(0,S.score+n);}
 function say(msg){S.log.unshift(msg);S.log.length=Math.min(S.log.length,6);renderLog();}
 function neighbors(i){const r=Math.floor(i/N),c=i%N,o=[];if(r>0)o.push(i-N);if(r<N-1)o.push(i+N);if(c>0)o.push(i-1);if(c<N-1)o.push(i+1);return o;}
@@ -302,6 +321,11 @@ function newPlant(g,tile,parents,packet){
 }
 function plantSeed(tile,allele){
   if(S.grid[tile]!==null){say("That tile is already occupied.");return;}
+  if(chal()){
+    const c=pick(["W","B","R","Y"]),g=c==="B"?pick(["BB","BR","BY"]):c+c;
+    const p=newPlant(g,tile,null,null);
+    say("Planted a mystery seed (#"+p.id+"). Its color and genotype are hidden. Water it within 15 seconds.");return;
+  }
   const g=allele+allele;
   const p=newPlant(g,tile,null,allele);p.revealed=true;
   say("Planted a "+PACKET[allele].toLowerCase()+" starter seed (#"+p.id+", genotype "+g+"). Water it within 15 seconds.");
@@ -391,7 +415,7 @@ function openCollect(p){
     +'<div class="hint"><strong>Before you sell:</strong> the goal is to find all 8 flower colors ('+found()+' of 8 so far), and new colors only come from crossing plants. '
     +(p.kids.length?'This plant has '+p.kids.length+' offspring on record. Once collected, it cannot be crossed again.':'<strong>This plant has not been crossed yet.</strong> Once collected, it is gone. Consider cancelling and using the Cross tool first.')+'</div>';
   $("dcAlleles").hidden=!!p.packet;$("dcId").hidden=!!p.packet;$("dcSell").textContent=p.packet?"Collect":"Collect without identifying";
-  $("dcNote").innerHTML=p.packet?"This is a starter plant, so its genotype is already known ("+p.g+"). There is nothing to identify.":"The first correct identification of each genotype earns +50. A genotype you have already confirmed earns 0. A wrong call costs −25."+(isBlue?"<br><strong>Hint:</strong> blue plants can hide an allele. Not sure? Cancel, cross this plant with homozygous plants (any starter works), and see what colors the offspring show before you decide.":"");
+  $("dcNote").innerHTML=p.packet?"This is a starter plant, so its genotype is already known ("+p.g+"). There is nothing to identify.":"The first correct identification of each genotype earns +50. A genotype you have already confirmed earns 0. A wrong call costs −25."+(isBlue?"<br><strong>Hint:</strong> blue plants can hide an allele. Not sure? Cancel, cross this plant with "+(chal()?"plants you know are homozygous":"homozygous plants (any starter works)")+", and see what colors the offspring show before you decide.":"");
   $("dlgCollect").showModal();$("dc").focus();
 }
 function saleValue(k){return (S.sales[k]||0)<3?PH[k].value:1;}
@@ -417,14 +441,16 @@ function showMsg(t,html){$("dm").textContent=t;$("dmBody").innerHTML=html;$("dlg
 /* ---------- completion ---------- */
 function goalsMet(){return PHKEYS.every(k=>S.collected[k])&&PHKEYS.every(k=>S.journal[k])&&GENOS.every(g=>S.idDone[g]);}
 function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(36).toUpperCase().padStart(7,"0");}
-function makeCode(name){const pay=[S.score,Math.floor(S.t),S.crosses].map(n=>n.toString(36).toUpperCase()).join("-");return"MG-"+pay+"-"+hash(name.trim().toLowerCase()+"|"+pay+"|"+SALT);}
-function checkCode(name,code){const m=/^MG-([0-9A-Z]+)-([0-9A-Z]+)-([0-9A-Z]+)-([0-9A-Z]+)$/.exec(code.trim().toUpperCase());if(!m)return null;const pay=m.slice(1,4).join("-");if(hash(name.trim().toLowerCase()+"|"+pay+"|"+SALT)!==m[4])return null;return{score:parseInt(m[1],36),time:parseInt(m[2],36),crosses:parseInt(m[3],36)};}
+function makeCode(name){const pay=[S.score,Math.floor(S.t),S.crosses].map(n=>n.toString(36).toUpperCase()).join("-");const c=chal();return(c?"MC-":"MG-")+pay+"-"+hash(name.trim().toLowerCase()+"|"+pay+"|"+SALT+(c?"|C":""));}
+function checkCode(name,code){const m=/^M([GC])-([0-9A-Z]+)-([0-9A-Z]+)-([0-9A-Z]+)-([0-9A-Z]+)$/.exec(code.trim().toUpperCase());if(!m)return null;const pay=m.slice(2,5).join("-"),c=m[1]==="C";if(hash(name.trim().toLowerCase()+"|"+pay+"|"+SALT+(c?"|C":""))!==m[5])return null;return{mode:c?"challenge":"standard",score:parseInt(m[2],36),time:parseInt(m[3],36),crosses:parseInt(m[4],36)};}
 function fmt(t){t=Math.floor(t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
 function finish(){
-  S.done=true;addScore(300);say("Garden complete! +300 completion bonus.");save();openEnd();
+  S.done=true;unlock();addScore(300);say("Garden complete! +300 completion bonus.");save();openEnd();
 }
 function openEnd(){
-  $("deStats").innerHTML="<p>Final score: <strong>"+S.score+"</strong> · Time: <strong>"+fmt(S.t)+"</strong> · Crosses: <strong>"+S.crosses+"</strong></p>";
+  $("deStats").innerHTML="<p>"+(chal()?"<strong>Challenge mode</strong> · ":"")+"Final score: <strong>"+S.score+"</strong> · Time: <strong>"+fmt(S.t)+"</strong> · Crosses: <strong>"+S.crosses+"</strong></p>";
+  $("deChalNote").innerHTML=chal()?"You finished challenge mode. Well done!":"<strong>Challenge mode unlocked.</strong> Every seed has a random color and a hidden genotype. Save your code first: starting a new game clears this one.";
+  $("deChal").textContent=chal()?"Play challenge mode again":"Start challenge mode";
   $("deName").value=S.name||"";updCode();$("dlgEnd").showModal();
 }
 function updCode(){const n=$("deName").value;S.name=n;$("deCode").textContent=n.trim()?makeCode(n):"—";save();}
@@ -436,16 +462,32 @@ function chip(p){
   let label="#"+p.id+" ";
   if(p.bloomed){const k=phOf(p);label+=PH[k].name+(p.packet?" ("+p.g+")":(p.revealed?" (confirmed "+p.g+")":""));
     return'<span class="chip"><img src="'+IMG[PH[k].img]+'" alt="">'+label+status(p)+'</span>';}
-  label+=p.packet?PACKET[p.packet]+" starter seed ("+p.g+")":"seed, color unknown";
+  label+=p.packet?PACKET[p.packet]+" starter seed ("+p.g+")":(p.p?"seed, color unknown":"mystery seed");
   return'<span class="chip noimg">'+label+status(p)+'</span>';
 }
-function status(p){return p.stage==="gone"?" · "+p.fate:(p.packet&&p.bloomed?" · starter":"");}
+function status(p){return p.stage==="gone"?" · "+p.fate:(!p.p&&p.bloomed?" · starter":"");}
 function buildTools(){
   const f=$("tools");
-  TOOLS.forEach(([k,l],i)=>{const lab=document.createElement("label");lab.innerHTML='<input type="radio" name="tool" value="'+k+'"'+(i===0?" checked":"")+'>'+l+' <kbd>'+((i+1)%10)+'</kbd>';f.appendChild(lab);});
+  TOOLS.forEach(([k,l],i)=>{const lab=document.createElement("label");lab.innerHTML='<input type="radio" name="tool" value="'+k+'"'+(i===0?" checked":"")+'>'+l+' <kbd>'+((i+1)%10)+'</kbd>';f.appendChild(lab);
+    if(k==="plant"){
+      const w=document.createElement("span");w.className="seedwrap";f.replaceChild(w,lab);w.appendChild(lab);
+      lab.insertAdjacentHTML("beforeend",' <span id="seedNow"></span>');
+      const m=document.createElement("div");m.id="seedMenu";m.setAttribute("role","menu");m.setAttribute("aria-label","Choose a seed color");m.hidden=true;
+      m.innerHTML=ORDER.split("").map(a=>'<button type="button" role="menuitemradio" data-seed="'+a+'"><img src="'+IMG[a+a]+'" alt=""> '+PACKET[a]+' ('+a+a+')</button>').join("");
+      m.addEventListener("click",e=>{const b=e.target.closest("[data-seed]");if(!b)return;seedColor=b.dataset.seed;closeSeedMenu();renderSeedNow();lab.querySelector("input").focus();});
+      w.appendChild(m);
+      lab.querySelector("input").addEventListener("click",()=>{tool="plant";openSeedMenu();});
+    }});
+  renderSeedNow();
+  document.addEventListener("click",e=>{if(!e.target.closest(".seedwrap"))closeSeedMenu();});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("seedMenu").hidden){closeSeedMenu();document.querySelector("input[value=plant]").focus();}});
   const wa=document.createElement("button");wa.type="button";wa.id="btnWaterAll";wa.innerHTML='💦 Water all <kbd>W</kbd>';wa.onclick=waterAll;f.appendChild(wa);
-  f.addEventListener("change",e=>{tool=e.target.value;crossA=crossB=moveA=null;renderGrid();});
+  f.addEventListener("change",e=>{if(e.target.name!=="tool")return;tool=e.target.value;if(tool!=="plant")closeSeedMenu();crossA=crossB=moveA=null;renderGrid();});
 }
+function renderSeedNow(){$("seedNow").textContent=chal()?"· mystery":"· "+PACKET[seedColor]+" ("+seedColor+seedColor+")";
+  [...$("seedMenu").children].forEach(b=>b.setAttribute("aria-checked",b.dataset.seed===seedColor));}
+function openSeedMenu(){if(!chal())$("seedMenu").hidden=false;}
+function closeSeedMenu(){const m=$("seedMenu");if(m)m.hidden=true;}
 function buildGrid(){
   const g=$("grid");
   for(let i=0;i<N*N;i++){
@@ -463,7 +505,7 @@ function tileClick(i){
   const id=S.grid[i],p=id!==null?S.plants[id]:null;
   if(tool==="cross"){crossTile(i);afterChange();return;}
   if(tool==="move"){moveTile(i);afterChange();return;}
-  if(tool.startsWith("plant")){if(p){selId=id;say("That tile is already occupied.");}else{plantSeed(i,tool[5]);selId=S.grid[i];}}
+  if(tool==="plant"){if(p){selId=id;say("That tile is already occupied.");}else{plantSeed(i,seedColor);selId=S.grid[i];}}
   else if(!p){say("That tile is empty.");}
   else{selId=id;if(tool==="inspect"&&isMobile()){afterChange();setTab("sel");return;}
     if(tool==="water")water(p);else if(tool==="fert")fertilize(p);else if(tool==="collect"){openCollect(p);return;}}
@@ -499,28 +541,40 @@ function found(){return PHKEYS.filter(k=>S.discovered[k]).length;}
 function coachText(){
   if(S.done)return"";
   const L=live(),blooms=L.filter(p=>p.stage==="bloom"),f=found();
-  if(!L.length)return"Start by choosing a seed tool and planting a few starter seeds of different colors.";
+  if(!L.length)return chal()?"Start by choosing Plant seed and planting several mystery seeds. Each grows into a random color with a hidden genotype.":"Start by choosing Plant seed, picking a color from the menu that opens, and planting a few starter seeds of different colors.";
   if(L.some(p=>p.stage==="seed"&&!p.water&&!p.slow))return"Seeds need water within 15 seconds: choose Water, then the seed, or press Water all.";
   if(L.some(p=>p.stage==="sprout"&&!p.slow&&!(p.water&&p.fert)))return"Sprouts need both Water and Fertilizer within 15 seconds.";
   if(blooms.some(p=>S.t-p.lastWater>=THIRST-30))return"A bloom is thirsty (amber border). Water it, or press Water all, before it withers.";
   if(blooms.length<2)return"Grow at least two blooming plants so you can cross them.";
+  if(chal()&&S.crosses===0&&new Set(blooms.map(phOf)).size<2)return"All your blooms are the same color. Plant more mystery seeds until you have different colors to cross.";
   if(S.crosses===0)return"Time to cross! Choose Cross, pick two blooming plants, then an empty tile. New colors only come from crosses.";
   if(f<8)return f+" of 8 colors found. Keep crossing: try pairs you have not crossed yet, including offspring.";
   const todo=PHKEYS.filter(k=>!S.journal[k]).length;
   if(todo)return"All 8 colors found. Now record each one in the field journal ("+todo+" left).";
-  if(!PHKEYS.every(k=>S.collected[k]))return"Collect at least one flower of every color to finish that goal.";
+  if(!PHKEYS.every(k=>S.collected[k]))return"Collect at least one flower of every color to finish that goal. Starter plants count too.";
   const nid=GENOS.filter(g=>S.idDone[g]).length;
-  if(nid<10)return nid+" of 10 genotypes confirmed. Grow offspring, work out each one's genotype from its parents and offspring, then Collect it and identify it. Each genotype pays once.";
+  if(nid<10)return nid+" of 10 genotypes confirmed. "+(chal()?"Work out each plant's genotype":"Grow offspring, work out each one's genotype")+" from its parents and offspring, then Collect it and identify it. Each genotype pays once.";
   return"";
+}
+const NOTE={standard:'🌰 Starter seeds are <strong>homozygous</strong> and their genotypes are given: WW, BB, RR and YY. The genotypes of their offspring are for you to work out.',
+  challenge:'🌰 <strong>Challenge mode:</strong> every seed is a mystery. It grows into a random starter color (white, blue, red or yellow) and its genotype is hidden, so a blue seed may carry a hidden allele. Any plant can be identified when you collect it.'};
+const BLUEHINT={standard:'<strong>Hint:</strong> blue plants can look identical and still differ genetically. Starter blues are BB, but a blue that came from a cross may carry a hidden allele. Try crossing blue plants with homozygous plants (any starter) and see what colors the offspring show. Several offspring tell you more than one.',
+  challenge:'<strong>Hint:</strong> blue plants can look identical and still differ genetically, and in challenge mode that includes blue plants grown from seed. Try crossing blue plants with plants you know are homozygous and see what colors the offspring show. Several offspring tell you more than one.'};
+let lastMode="";
+function renderMode(){
+  if(S.mode===lastMode)return;lastMode=S.mode;
+  $("starterNote").innerHTML=NOTE[S.mode];$("modeStat").textContent=chal()?"Challenge":"Standard";
+  const bh=document.querySelector("#jr-blue .hint");if(bh)bh.innerHTML=BLUEHINT[S.mode];
+  renderSeedNow();closeSeedMenu();
 }
 function renderCoach(){const t=coachText(),c=$("coach"),h=t?"<strong>Next step:</strong> "+t:"";if(c.innerHTML!==h)c.innerHTML=h;}
 function renderLog(){$("log").innerHTML=S.log.map(m=>"<li>"+m+"</li>").join("");}
 function renderGoals(){
   const c=PHKEYS.filter(k=>S.collected[k]).length,j=PHKEYS.filter(k=>S.journal[k]).length,nid=GENOS.filter(g=>S.idDone[g]).length;
   const mark=b=>b?"✅":"⬜";
-  let h='<div class="goal"><span aria-hidden="true">'+mark(c===8)+'</span><span>Collect all 8 flower colors: <strong>'+c+' of 8</strong></span></div>'
+  let h='<div class="goal"><span aria-hidden="true">'+mark(c===8)+'</span><span>Collect all 8 flower colors: <strong>'+c+' of 8</strong><br><span class="muted">Starter plants count, as well as offspring.</span></span></div>'
    +'<div class="goal"><span aria-hidden="true">'+mark(j===8)+'</span><span>Complete all 8 journal entries: <strong>'+j+' of 8</strong></span></div>'
-   +'<div class="goal"><span aria-hidden="true">'+mark(nid===10)+'</span><span>Correctly identify an offspring of each of the 10 genotypes when collecting: <strong>'+nid+' of 10</strong>'+(nid?'<br><span class="muted">Confirmed: '+GENOS.filter(g=>S.idDone[g]).join(", ")+'</span>':'')+'</span></div>';
+   +'<div class="goal"><span aria-hidden="true">'+mark(nid===10)+'</span><span>Correctly identify '+(chal()?'a plant':'an offspring')+' of each of the 10 genotypes when collecting: <strong>'+nid+' of 10</strong>'+(nid?'<br><span class="muted">Confirmed: '+GENOS.filter(g=>S.idDone[g]).join(", ")+'</span>':'')+'</span></div>';
   if(S.done)h+='<p><button id="showCode">Show completion code</button></p>';
   $("goals").innerHTML=h;
   if(S.done)$("showCode").onclick=openEnd;
@@ -533,9 +587,10 @@ function buildJournal(){
      +'<div class="form"><fieldset><legend>Which genotypes give this color? Select all that apply.</legend><div class="gbox">'
      +GENOS.map(g=>'<label><input type="checkbox" value="'+g+'"> '+g+'</label>').join("")+'</div></fieldset>'
      +'<label>Inheritance pattern<select><option value="">Choose a pattern…</option>'+Object.entries(PATS).map(([v,t])=>'<option value="'+v+'">'+t+'</option>').join("")+'</select></label>'
-     +(k==="blue"?'<div class="hint"><strong>Hint:</strong> blue plants can look identical and still differ genetically. Starter blues are BB, but a blue that came from a cross may carry a hidden allele. Try crossing blue plants with homozygous plants (any starter) and see what colors the offspring show. Several offspring tell you more than one.</div>':'')
+     +(k==="blue"?'<div class="hint"></div>':'')
      +'<div class="row"><button type="button">Submit entry</button></div></div><p class="fb" role="status"></p>';
     d.querySelector("button").addEventListener("click",()=>submitJournal(k));
+    d.addEventListener("toggle",renderJournal);
     j.appendChild(d);
   });
   const p=document.createElement("p");p.className="muted";p.id="jr-none";p.textContent="Nothing has bloomed yet.";j.appendChild(p);
@@ -545,7 +600,7 @@ function renderJournal(){
   PHKEYS.forEach(k=>{const d=$("jr-"+k);d.hidden=!S.discovered[k];if(S.discovered[k])any=true;
     if(S.journal[k]){d.classList.add("done");d.querySelector(".form").hidden=true;d.querySelector(".st").textContent="✓ complete";
       const fb=d.querySelector(".fb");fb.className="fb ok";fb.textContent=PH[k].genos.join(", ")+" → "+PH[k].name+". "+PATS[PH[k].pat]+".";}
-    else{d.classList.remove("done");d.querySelector(".form").hidden=false;d.querySelector(".st").textContent="";}});
+    else{d.classList.remove("done");d.querySelector(".form").hidden=false;d.querySelector(".st").textContent=d.open?"":"click to answer ▸";}});
   $("jr-none").hidden=any;
 }
 function submitJournal(k){
@@ -620,7 +675,7 @@ function renderSel(){
     if(mates.length>1)h+='<p class="pedpick"><span>Show this plant\'s cross with:</span> '+mates.map(m=>'<button type="button" class="secondary" data-mate="'+m+'" aria-pressed="'+(m===selPartner)+'">#'+m+(S.plants[m].bloomed?' '+(PH[phOf(S.plants[m])].short||PH[phOf(S.plants[m])].name):'')+'</button>').join(" ")+'</p>';
     h+=pedSVG(p,selPartner);
     h+='<p class="muted">Each row is a generation. A horizontal line joins two crossed plants, and their offspring hang from the line below. The plant you selected has the yellow ring. Choose any other symbol to see that plant\'s pedigree.</p>';
-    if(!p.p)h+='<p class="muted">This plant grew from a starter seed, so its genotype is known ('+p.g+') and it has no recorded parents.</p>';
+    if(!p.p)h+=p.packet?'<p class="muted">This plant grew from a starter seed, so its genotype is known ('+p.g+') and it has no recorded parents.</p>':'<p class="muted">This plant grew from a mystery seed, so its genotype is hidden and it has no recorded parents.</p>';
     h+='<h3>Offspring counts</h3>';
     if(!p.kids.length)h+='<p class="muted">No offspring yet.</p>';
     else{const by={};p.kids.forEach(i=>{const k=S.plants[i],m=k.p[0]===p.id?k.p[1]:k.p[0];(by[m]=by[m]||[]).push(i);});
@@ -651,7 +706,7 @@ function buildNav(){const n=$("mnav");TABS.forEach(([k,l])=>{const b=document.cr
 function renderNav(){const cur=document.querySelector("main").dataset.tab,todo=PHKEYS.filter(k=>S.discovered[k]&&!S.journal[k]).length;
   [...$("mnav").children].forEach((b,i)=>{const [k,l]=TABS[i];b.setAttribute("aria-pressed",k===cur);
     const h=l+(k==="journal"&&todo?'<span class="n" aria-label="'+todo+' entries to fill">'+todo+'</span>':"");if(b.innerHTML!==h)b.innerHTML=h;});}
-function renderAll(){renderNav();renderGrid();renderGoals();renderJournal();renderSel();renderCrossLog();}
+function renderAll(){renderNav();renderMode();renderGrid();renderGoals();renderJournal();renderSel();renderCrossLog();}
 
 /* ---------- loop & wiring ---------- */
 function anyDialog(){return!!document.querySelector("dialog[open]");}
@@ -686,20 +741,22 @@ function init(){
   $("helpClose").onclick=()=>$("dlgHelp").close();
   $("helpX").onclick=()=>$("dlgHelp").close();
   $("helpBody").addEventListener("scroll",helpMore);
-  $("btnNew").onclick=()=>{closeMenu();$("dlgNew").showModal();};
+  $("btnNew").onclick=()=>{closeMenu();openNew();};
   $("btnMenu").onclick=e=>{e.stopPropagation();const o=!$("menu").classList.contains("open");$("menu").classList.toggle("open",o);$("btnMenu").setAttribute("aria-expanded",o);};
   document.addEventListener("click",e=>{if(!$("menu").contains(e.target))closeMenu();});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("menu").classList.contains("open")){closeMenu();$("btnMenu").focus();}});
   $("dnNo").onclick=()=>$("dlgNew").close();
-  $("dnYes").onclick=()=>{S=fresh();selId=null;$("journal").querySelectorAll("input").forEach(x=>x.checked=false);$("journal").querySelectorAll("select").forEach(x=>x.value="");$("journal").querySelectorAll(".fb").forEach(x=>{x.textContent="";x.className="fb";});save();renderAll();renderLog();$("dlgNew").close();};
+  $("dnYes").onclick=()=>newGame("standard");
+  $("dnChal").onclick=()=>newGame("challenge");
   $("dcId").onclick=()=>finishCollect(true);
   $("dcSell").onclick=()=>finishCollect(false);
   $("dcCancel").onclick=()=>{collecting=null;$("dlgCollect").close();};
   $("dmOk").onclick=()=>$("dlgMsg").close();
   $("deClose").onclick=()=>$("dlgEnd").close();
+  $("deChal").onclick=()=>newGame("challenge");
   $("deName").addEventListener("input",updCode);
   document.addEventListener("keydown",e=>{if(anyDialog()||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=="radio")return;if(e.key==="w"||e.key==="W"){waterAll();return;}let n=parseInt(e.key,10);if(n===0)n=10;
-    if(n>=1&&n<=TOOLS.length){const r=document.querySelectorAll('input[name=tool]')[n-1];r.checked=true;tool=r.value;crossA=crossB=moveA=null;renderGrid();}});
+    if(n>=1&&n<=TOOLS.length){const r=document.querySelectorAll('input[name=tool]')[n-1];r.checked=true;tool=r.value;crossA=crossB=moveA=null;renderGrid();if(tool==="plant"&&!chal()){openSeedMenu();$("seedMenu").querySelector('[aria-checked=true]').focus();}else closeSeedMenu();}});
   window.addEventListener("beforeunload",save);
   document.addEventListener("visibilitychange",()=>{lastReal=performance.now();syncMusic();if(document.hidden)save();});
   $("sel").addEventListener("click",selClick);
@@ -709,13 +766,22 @@ function init(){
   if(!Object.keys(S.plants).length&&!S.done)openHelp();
   setInterval(frame,250);
 }
+function openNew(){const u=isUnlocked();$("dnChal").disabled=!u;
+  $("dnNote").textContent=u?"Challenge mode: every seed has a random color and a hidden genotype. Same goals.":"Challenge mode unlocks after you finish a standard game.";$("dlgNew").showModal();$("dn").focus();}
+function newGame(mode){
+  S=fresh(mode);selId=null;selPartner=null;crossA=crossB=moveA=null;lastSel="";
+  $("journal").querySelectorAll("input").forEach(x=>x.checked=false);$("journal").querySelectorAll("select").forEach(x=>x.value="");
+  $("journal").querySelectorAll(".fb").forEach(x=>{x.textContent="";x.className="fb";});$("journal").querySelectorAll("details").forEach(x=>x.open=false);
+  say(mode==="challenge"?"Challenge mode started. Every seed is a mystery.":"New standard game started.");
+  save();renderAll();renderLog();["dlgNew","dlgEnd"].forEach(d=>{if($(d).open)$(d).close();});
+}
 function closeMenu(){$("menu").classList.remove("open");$("btnMenu").setAttribute("aria-expanded","false");}
 function helpMore(){const b=$("helpBody");$("helpMore").hidden=b.scrollTop+b.clientHeight>=b.scrollHeight-8;}
 function openHelp(){$("dlgHelp").showModal();$("helpX").focus({preventScroll:true});$("helpBody").scrollTop=0;helpMore();}
 function buildVerify(){
   const v=$("verify");v.hidden=false;v.style.cssText="background:#14532d;padding:12px 18px;border-bottom:1px solid #3f8f5f";
   v.innerHTML='<strong>Instructor code check</strong> <label>Student name <input id="vn" type="text"></label> <label>Code <input id="vc" type="text"></label> <button id="vb">Check</button> <span id="vr" role="status"></span>';
-  $("vb").onclick=()=>{const r=checkCode($("vn").value,$("vc").value);$("vr").textContent=r?"Valid: score "+r.score+", time "+fmt(r.time)+", "+r.crosses+" crosses.":"Not valid for this name.";};
+  $("vb").onclick=()=>{const r=checkCode($("vn").value,$("vc").value);$("vr").textContent=r?"Valid ("+r.mode+" mode): score "+r.score+", time "+fmt(r.time)+", "+r.crosses+" crosses.":"Not valid for this name.";};
 }
 if(typeof document!=="undefined")init();
 if(typeof module!=="undefined")module.exports={step,fresh,norm,PHENO_OF,makeCode,checkCode,set:(s,r)=>{S=s;if(r)rng=r;},get:()=>S,plantSeed,newPlant};
