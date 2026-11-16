@@ -184,6 +184,7 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
       <button id="btnMusic" class="secondary" aria-pressed="false">🎵 Music: off</button>
       <label class="vol">Volume <input type="range" id="vol" min="0" max="100" step="5" value="40"></label>
       <button id="btnHelp" class="secondary">How to play</button>
+      <button id="btnProg" class="secondary">Progress code</button>
       <button id="btnNew" class="secondary">New game</button>
     </div>
   </div>
@@ -231,16 +232,17 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
 <dialog id="dlgHelp" aria-labelledby="dh">
   <div class="dhead"><h2 id="dh">How to play</h2><button id="helpX" class="secondary xbtn" aria-label="Close how to play">✕</button></div>
   <div class="dbody" id="helpBody" tabindex="0">
+  <p class="hint" style="margin-top:8px"><strong>This is an exploration activity. You do not need to finish to get full credit.</strong> Use <strong>Progress code</strong> (next to How to play) at any time to get a code to submit.</p>
   <p>Marigold color is controlled by <strong>one gene with four alleles</strong>: W, B, R and Y. Every plant carries two alleles. Your job is to work out how they interact.</p>
   <ol>
     <li><strong>Plant</strong> starter seeds (white, blue, red, yellow). Starter seeds are <strong>homozygous</strong> and their genotypes are given (WW, BB, RR, YY). <strong>Water</strong> a seed within 15 seconds or it will probably fail.</li>
     <li>Sprouts need <strong>water and fertilizer</strong> within 15 seconds to bloom on time. Without both they may bloom late or wither.</li>
-    <li>The <strong>Collect all</strong> button (available with 5 or more blooms) sells every blooming plant at once, without identifying any.</li>
     <li>The <strong>Water all</strong> button waters every plant in the patch at once. Fertilizer is still applied plant by plant.</li>
     <li>Blooming plants need water <strong>every 2 minutes</strong>. A plant turns thirsty (amber border) 30 seconds before the deadline and may wither if left dry.</li>
     <li>Like Mendel with his peas, <strong>you choose the crosses</strong>: with the Cross tool, pick any two blooming plants, then pick an empty tile where their seed will be planted.</li>
     <li><strong>Replant</strong> moves a plant to another tile (or swaps two plants), so you can organize the patch however you like.</li>
     <li><strong>Collect</strong> a bloom to sell it for points. For any plant that came from a cross, you can also identify its genotype: the first correct call for each genotype earns +50, and a wrong call costs −25.</li>
+    <li>The <strong>Collect all</strong> button (available with 5 or more blooms) sells every blooming plant at once, without identifying any.</li>
     <li>Fill in the <strong>field journal</strong> for every color.</li>
   </ol>
   <p>Background music is off until you press the Music button in the header.</p>
@@ -266,6 +268,15 @@ footer{text-align:center;color:#0a2e19;font-weight:600;font-size:.82rem;padding:
   </div>
 </dialog>
 
+<dialog id="dlgProg" aria-labelledby="dg">
+  <h2 id="dg" tabindex="-1">My progress code</h2>
+  <p>This code records how far you have explored. You can get one at any time, and you do not need to finish the game.</p>
+  <div id="dgStats"></div>
+  <p><label>Type your name to generate your progress code:<br><input type="text" id="dgName" autocomplete="name" style="width:100%"></label></p>
+  <p><span class="code" id="dgCode">—</span> <button type="button" id="dgCopy" class="secondary">Copy code</button> <span id="dgCopied" role="status" class="muted"></span></p>
+  <p class="muted">Submit the code with your name exactly as you typed it here. The code changes as you make progress, so generate it when you are ready to submit.</p>
+  <div class="row"><button id="dgClose" class="secondary">Close</button></div>
+</dialog>
 <dialog id="dlgAll" aria-labelledby="da">
   <h2 id="da" tabindex="-1">Collect all flowers?</h2>
   <div id="daBody"></div>
@@ -488,7 +499,31 @@ function showMsg(t,html){$("dm").textContent=t;$("dmBody").innerHTML=html;$("dlg
 function goalsMet(){return PHKEYS.every(k=>S.collected[k])&&PHKEYS.every(k=>S.journal[k])&&GENOS.every(g=>S.idDone[g]);}
 function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(36).toUpperCase().padStart(7,"0");}
 function makeCode(name){const pay=[S.score,Math.floor(S.t),S.crosses].map(n=>n.toString(36).toUpperCase()).join("-");const c=chal();return(c?"MC-":"MG-")+pay+"-"+hash(name.trim().toLowerCase()+"|"+pay+"|"+SALT+(c?"|C":""));}
-function checkCode(name,code){const m=/^M([GC])-([0-9A-Z]+)-([0-9A-Z]+)-([0-9A-Z]+)-([0-9A-Z]+)$/.exec(code.trim().toUpperCase());if(!m)return null;const pay=m.slice(2,5).join("-"),c=m[1]==="C";if(hash(name.trim().toLowerCase()+"|"+pay+"|"+SALT+(c?"|C":""))!==m[5])return null;return{mode:c?"challenge":"standard",score:parseInt(m[2],36),time:parseInt(m[3],36),crosses:parseInt(m[4],36)};}
+function mask(obj){return PHKEYS.reduce((m,k,i)=>m|(obj[k]?1<<i:0),0);}
+function unmask(m){return PHKEYS.filter((k,i)=>m>>i&1).map(k=>PH[k].name);}
+function makeProgress(name){const c=chal(),pay=[mask(S.discovered),mask(S.journal),S.crosses,Math.floor(S.t/60)].map(n=>n.toString(36).toUpperCase()).join("-");
+  return(c?"MQ-":"MP-")+pay+"-"+hash(name.trim().toLowerCase()+"|"+pay+"|"+SALT+(c?"|Q":"|P"));}
+function checkCode(name,code){
+  const m=/^M([GCPQ])-([0-9A-Z]+)-([0-9A-Z]+)-([0-9A-Z]+)(?:-([0-9A-Z]+))?-([0-9A-Z]{7})$/.exec(code.trim().toUpperCase());if(!m)return null;
+  const t=m[1],f=m.slice(2,6).filter(v=>v!==undefined),pay=f.join("-"),nm=name.trim().toLowerCase(),n=f.map(v=>parseInt(v,36));
+  if(t==="G"||t==="C"){if(f.length!==3||hash(nm+"|"+pay+"|"+SALT+(t==="C"?"|C":""))!==m[6])return null;
+    return{kind:"completion",mode:t==="C"?"challenge":"standard",score:n[0],time:n[1],crosses:n[2]};}
+  if(f.length!==4||n[0]>255||n[1]>255||hash(nm+"|"+pay+"|"+SALT+"|"+t)!==m[6])return null;
+  return{kind:"progress",mode:t==="Q"?"challenge":"standard",colors:unmask(n[0]),journal:unmask(n[1]),crosses:n[2],minutes:n[3]};
+}
+function describeCode(r){
+  if(!r)return"Not valid for this name.";
+  if(r.kind==="completion")return"Valid completion code ("+r.mode+" mode): score "+r.score+", time "+fmt(r.time)+", "+r.crosses+" crosses.";
+  return"Valid progress code ("+r.mode+" mode): "+r.colors.length+" of 8 colors discovered"+(r.colors.length?" ("+r.colors.join(", ")+")":"")+"; "+r.journal.length+" of 8 journal entries completed"+(r.journal.length?" ("+r.journal.join(", ")+")":"")+"; "+r.crosses+" cross"+(r.crosses===1?"":"es")+"; "+r.minutes+" minute"+(r.minutes===1?"":"s")+" played.";
+}
+function openProg(){
+  const d=found(),j=PHKEYS.filter(k=>S.journal[k]).length;
+  $("dgStats").innerHTML="<ul style='margin:0;padding-left:20px'><li>Colors discovered: <strong>"+d+" of 8</strong></li><li>Journal entries completed: <strong>"+j+" of 8</strong></li><li>Crosses made: <strong>"+S.crosses+"</strong></li><li>Minutes played: <strong>"+Math.floor(S.t/60)+"</strong></li></ul>";
+  $("dgName").value=S.name||"";$("dgCopied").textContent="";updProg();$("dlgProg").showModal();$("dg").focus();
+}
+function updProg(){const n=$("dgName").value;S.name=n;$("dgCode").textContent=n.trim()?makeProgress(n):"—";$("dgCopy").disabled=!n.trim();save();}
+function copyProg(){const c=$("dgCode").textContent,done=()=>{$("dgCopied").textContent="Copied.";};
+  try{navigator.clipboard.writeText(c).then(done,()=>{$("dgCopied").textContent="Select the code and copy it.";});}catch(e){$("dgCopied").textContent="Select the code and copy it.";}}
 function fmt(t){t=Math.floor(t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
 function finish(){
   S.done=true;unlock();addScore(300);say("Garden complete! +300 completion bonus.");save();openEnd();
@@ -843,6 +878,7 @@ function init(){
   $("btnPause").onclick=()=>{userPaused=!userPaused;$("btnPause").setAttribute("aria-pressed",userPaused);$("btnPause").textContent=userPaused?"Resume":"Pause";};
   $("btnHelp").onclick=()=>{closeMenu();openHelp();};
   $("helpClose").onclick=()=>$("dlgHelp").close();
+  $("btnProg").onclick=()=>{closeMenu();openProg();};$("dgClose").onclick=()=>$("dlgProg").close();$("dgName").addEventListener("input",updProg);$("dgCopy").onclick=copyProg;
   $("helpX").onclick=()=>$("dlgHelp").close();
   $("helpBody").addEventListener("scroll",helpMore);
   $("btnNew").onclick=()=>{closeMenu();openNew();};
@@ -889,8 +925,17 @@ function helpMore(){const b=$("helpBody");$("helpMore").hidden=b.scrollTop+b.cli
 function openHelp(){$("dlgHelp").showModal();$("helpX").focus({preventScroll:true});$("helpBody").scrollTop=0;helpMore();}
 function buildVerify(){
   const v=$("verify");v.hidden=false;v.style.cssText="background:#14532d;padding:12px 18px;border-bottom:1px solid #3f8f5f";
-  v.innerHTML='<strong>Instructor code check</strong> <label>Student name <input id="vn" type="text"></label> <label>Code <input id="vc" type="text"></label> <button id="vb">Check</button> <span id="vr" role="status"></span>';
-  $("vb").onclick=()=>{const r=checkCode($("vn").value,$("vc").value);$("vr").textContent=r?"Valid ("+r.mode+" mode): score "+r.score+", time "+fmt(r.time)+", "+r.crosses+" crosses.":"Not valid for this name.";};
+  v.innerHTML='<h2 style="margin:0 0 6px">Instructor code check</h2><p class="muted" style="margin:0 0 8px">Checks completion codes (MG, MC) and progress codes (MP, MQ).</p>'
+   +'<p><label>Student name <input id="vn" type="text"></label> <label>Code <input id="vc" type="text" size="28"></label> <button id="vb">Check</button></p><p id="vr" role="status"></p>'
+   +'<details><summary style="cursor:pointer;font-weight:600">Check many at once</summary><p class="muted">One student per line: the name, then the code, separated by a comma or a tab (for example, pasted from a spreadsheet).</p>'
+   +'<textarea id="vt" rows="6" style="width:100%;background:#0a2e19;color:#f3fbf4;border:1px solid #3f8f5f;border-radius:6px" aria-label="Names and codes, one student per line"></textarea>'
+   +'<p><button id="vtb">Check all</button></p><div id="vtr" role="status"></div></details>';
+  v.querySelectorAll("input").forEach(i=>i.style.cssText="background:#0a2e19;color:#f3fbf4;border:1px solid #3f8f5f;border-radius:6px;padding:5px");
+  $("vb").onclick=()=>{$("vr").textContent=describeCode(checkCode($("vn").value,$("vc").value));};
+  $("vtb").onclick=()=>{const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+    const rows=$("vt").value.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=/^(.*?)[\t,;]\s*(M[GCPQ]-[0-9A-Za-z-]+)\s*$/.exec(l);if(!m)return[l,"","Could not read this line (expected: name, code)."];return[m[1].trim(),m[2],describeCode(checkCode(m[1],m[2]))];});
+    const ok=rows.filter(r=>r[2].startsWith("Valid")).length;
+    $("vtr").innerHTML="<p><strong>"+ok+" of "+rows.length+" valid.</strong></p><table><thead><tr><th scope='col'>Name</th><th scope='col'>Code</th><th scope='col'>Result</th></tr></thead><tbody>"+rows.map(r=>"<tr><td>"+esc(r[0])+"</td><td>"+esc(r[1])+"</td><td>"+esc(r[2])+"</td></tr>").join("")+"</tbody></table>";};
 }
 if(typeof document!=="undefined")init();
 if(typeof module!=="undefined")module.exports={step,fresh,norm,PHENO_OF,makeCode,checkCode,set:(s,r)=>{S=s;if(r)rng=r;},get:()=>S,plantSeed,newPlant};
